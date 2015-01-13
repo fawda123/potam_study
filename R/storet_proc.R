@@ -1,49 +1,130 @@
+
+######
+# get legacy storet data (up to 1998) from downloaded files for MN
+# downloaded from here: http://www.epa.gov/storpubl/legacy/gateway.htm
+
+library(foreach)
+library(doParallel)
+
 load('data/mn_potam.RData')
 
-get_files <- list.files(path = 'C:/Users/mbeck/Desktop/MNstoret/Minnesota/', 
+get_files <- list.files(path = 'M:/docs/veg_indics/STORET_data/MN_legacy_storet/Minnesota/', 
   pattern = '^.*_res_.*\\.txt', recursive = T, full.names = T)
 
 strt <- Sys.time()
 mn_dows <- mn_potam$lake
-out_dat <- NULL
-for(fl in get_files){
+
+cl <- makeCluster(8)
+registerDoParallel(cl)
+
+out_dat <- foreach(fl = get_files) %dopar% {
   
   # counter
+  sink('C:/Users/mbeck/Desktop/log.txt')
   cat(basename(fl), '\n')
   print(Sys.time() - strt)
+  sink()
   
   # get file
-  tmp <- read.table(get_files[1], sep = '\t', header = T)
+  tmp <- readLines(fl)
+  heads <- strsplit(tmp[1], '\t')[[1]]
+  heads <- gsub('^[ ]*|[ ]*$', '', heads)
   
   # filter by lakes
-  tmp <- tmp[grepl('LAKE:', tmp$Station.Name), ]
+  tmp <- tmp[grepl('LAKE:', tmp)]
   
-  # filter by phosphorus, color, secchi, and alkalinity
-  # secchi: 77-78
-  # color: 79-84
-  # alkalinity: 409-431
-  # phosphorus: 650-678
-  get_parms <- as.numeric(as.character(tmp$Param)) %in% c(77:84, 409:431, 650:678)
-  tmp <- tmp[get_parms, ]
+  # if no lakes, go to next file
+  if(length(tmp) == 0){ tmp <- NULL
   
-  # convert station to numeric, 7 or 8 digit
-  tmp$Station <- gsub('-', '', as.character(tmp$Station))
-  tmp$Station <- as.numeric(as.character(tmp$Station))
-  tmp$Station[nchar(tmp$Station) == 5] <- 100 * tmp$Station[nchar(tmp$Station) == 5]
+  } else {
+    # parse, clear trailing/leading spaces
+    tmp <- strsplit(tmp, '\\t')
+    tmp <- suppressWarnings(do.call('rbind', tmp))
+    tmp <- gsub('^[ ]*|[ ]*$', '', tmp)
+    tmp <- data.frame(tmp, stringsAsFactors = F)[, 1:19]
+    names(tmp) <- heads[1:19]
+    
+    # filter by phosphorus, color, secchi, and alkalinity
+    # secchi: 77-78
+    # color: 79-84
+    # alkalinity: 409-431
+    # phosphorus: 650-678
+    get_parms <- as.numeric(as.character(tmp$Param)) %in% c(77:84, 409:431, 650:678)
+    tmp <- tmp[get_parms, ]
+    
+    # convert station to numeric, 7 or 8 digit
+    tmp$Station <- gsub('-', '', as.character(tmp$Station))
+    tmp$Station <- as.numeric(as.character(tmp$Station))
+    tmp$Station[nchar(tmp$Station) %in% c(5, 6)] <- 100 * tmp$Station[nchar(tmp$Station) %in%  c(5, 6)]
+    
+    tmp$result <- as.numeric(as.character(tmp[, 'Result Value']))
+    
+    # retain columns of interest
+    keep_cols <- c('Station', 'Param', 'Start Date', 'result')
+    tmp <- tmp[, keep_cols]
+    names(tmp) <- c('lake', 'param', 'date', 'value')
+    
+    # subset by veg dows
+    tmp <- tmp[tmp$lake %in% mn_dows, ]
   
-  tmp$result <- as.numeric(as.character(tmp$Result.Value))
+  }
   
-  # retain columns of interest
-  keep_cols <- c('Station', 'Param', 'Start.Date', 'result')
-  tmp <- tmp[, keep_cols]
-  names(tmp) <- c('lake', 'param', 'date', 'value')
-  
-  # subset by veg dows
-  tmp <- tmp[tmp$lake %in% mn_dows, ]
-  
-  out_dat <- rbind(out_dat, tmp)
-  
+  tmp
+    
 }
 
 
+# combine, average by day for each lake, make wide format
+tmp <- do.call('rbind', out_dat)
+tmp <- tmp[as.numeric(tmp$param) %in% c(78, 80, 410, 665), ]
+tmp <- dcast(tmp, lake + date ~ param, value.var = 'value', 
+  fun.aggregate = function(x) mean(x, na.rm = T))
+names(tmp) <- c('lake', 'date', 'secchi', 'color', 'alk', 'tp')
+
+######
+# get recent storet data for MN
+# raw data from custom query of tp, transparency, alkalinity, color for all MN lakes in database
+# download form here: http://ofmpub.epa.gov/storpubl/dw_pages.querycriteria
+
+# import raw data
+raw_dat <- 'M:/docs/veg_indics/STORET_data/MN_current_storet.txt'
+raw_dat <- read.table(raw_dat, sep = '\t', header = T)
+
+# select columns of interest
+keep_cols <- c('Station.ID', 'Activity.Start', 'Characteristic.Name', 'Result.Value.as.Text', 'Units')
+dat <- raw_dat[, keep_cols]
+names(dat) <- c('lake', 'date', 'param', 'value', 'units')
+    
+# selects lakes that have DOW
+dat$lake <- gsub('-', '', as.character(dat$lake))
+dat <- dat[!grepl('[a-z,A-Z]', dat$lake) & nchar(dat$lake) >= 7, ]
+dat$lake <- as.numeric(substr(dat$lake, 1, 8))
+
+# aggregate by day
+dat$date <- as.POSIXct(as.character(dat$date), format = '%Y-%m-%d %H:%M:%S')
+dat$date <- as.Date(dat$date)
+dat <- dcast(dat, lake + date ~ param, value.var = 'value', 
+  fun.aggregate = function(x) mean(as.numeric(as.character(x)), na.rm = T))
+
+# get only the lakes that I have
+load('data/mn_potam.RData')
+dat <- dat[dat$lake %in% mn_potam$lake, ]
+
+# retain relevant results, rearrange for combine with legacy data
+# apply(dat, 2, function(x) sum(is.na(x))/length(x))
+keep_cols <- c(1, 2, 4, 5, 6, 7)
+dat <- dat[, keep_cols]
+names(dat) <- c('lake', 'date', 'alk', 'color', 'tp', 'secchi')
+dat <- dat[, c('lake', 'date', 'secchi', 'color', 'alk', 'tp')]
+
+## 
+# combine legacy with updated
+# average across dates
+# save
+
+# all dates.... need to describe this distribution in the manuscript
+allmn_wq <- rbind(dat, tmp)
+
+# aggregated 
+allmn_wq <- aggregate(. ~ lake, allmn_wq[, -2], FUN = function(x) mean(x, na.rm = T), na.action = na.pass)
 

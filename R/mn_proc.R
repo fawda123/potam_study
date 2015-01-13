@@ -91,5 +91,10 @@ rm(list = ls())
 
 load(file = 'data/mn_potam.RData')
 
+# wq data from STORET, see 'storet_proc.r'
+load(file = 'data/allmn_wq.RData'
+  
+# merge the data....
 
+##
 # get climate variables
