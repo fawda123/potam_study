@@ -156,6 +156,7 @@ wi_lakes <- wi_potam$lake
 cl <- makeCluster(8)
 registerDoParallel(cl)
 
+# get all data for each of four wq measurements
 out_dat <- foreach(fl = get_files) %dopar% {
   
   # counter
@@ -196,9 +197,6 @@ out_dat <- foreach(fl = get_files) %dopar% {
   tmp <- tmp[, keep_cols]
   names(tmp) <- c('lake', 'param', 'date', 'value')
   
-  # subset by veg dows
-#   tmp <- tmp[tmp$lake %in% wi_lakes, ]
-  
   tmp
     
 }
@@ -211,6 +209,9 @@ tmp <- dcast(tmp, lake + date ~ param, value.var = 'value',
   fun.aggregate = function(x) mean(x, na.rm = T))
 names(tmp) <- c('lake', 'date', 'secchi', 'color', 'alk', 'tp')
 
+# 234123513467asdfasddf
+
+# need to reference these stations with lake wbic
 
 ######
 # current WI storet
@@ -238,18 +239,45 @@ dat$param[grepl('Color|color', dat$param)] <- 'color'
 dat$param[grepl('Transparency|Secchi', dat$param)] <- 'secchi'
 dat <- dat[dat$param %in% c('alk', 'TP', 'color', 'secchi'), ]
 
-###### 123453145234asdas5
+##
+# aggregate data by day but need to sort out unit conversions
 # need to figure out unit conversions on this for aggregation
 
-# repeat the exercise for legacy data (i.e., find stations that are within a wbic)
+# remove leading/trailing white space for labels
+dat$units <- as.character(dat$units)
+dat$units <- gsub('^[[:space:]]*|[[:space:]]*$', '', dat$units)
 
+# values to numeric, remove NA
+dat$value <- as.numeric(as.character(dat$value))
+dat <- dat[!is.na(dat$value), ]
 
+# check distribution
+table(dat[, c('param', 'units')])
 
+# values to remove because there are only a few - 'ueq/L', 'mm', 'm', 'mg/kg'
+dat <- dat[!dat$units %in% c('ueq/L', 'mm', 'm', 'mg/kg'), ]
 
+##
+# conversions
+# secchi as cm
+# color as PCU
+# alk as mg/l
+# TP as mg/L
 
+##
+# TP.....
+sel_dat <- dat$param %in% 'TP'
+plot(value ~ value, data = dat[sel_dat, ], col = factor(dat[sel_dat, 'units']))
 
+# 1 ppb = 0.001 mg/L 
+sel_dat <- dat$param %in% 'TP' & dat$units %in% 'ppb'
+dat[sel_dat, 'value'] <- dat[sel_dat, 'value'] * 0.001
 
+# 1 ug/L = 0.001 mg/L 
+sel_dat <- dat$param %in% 'TP' & dat$units %in% 'ug/l'
+dat[sel_dat, 'value'] <- dat[sel_dat, 'value'] * 0.001
 
+##
 # aggregate by day
 dat$date <- as.POSIXct(as.character(dat$date), format = '%Y-%m-%d %H:%M:%S')
 dat$date <- as.Date(dat$date)
