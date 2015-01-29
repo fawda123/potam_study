@@ -193,25 +193,54 @@ out_dat <- foreach(fl = get_files) %dopar% {
   tmp$result <- as.numeric(as.character(tmp[, 'Result Value']))
   
   # retain columns of interest
-  keep_cols <- c('Station', 'Param', 'Start Date', 'result')
+  keep_cols <- c('Station', 'Param', 'Start Date', 'result', 'Latitude', 'Longitude')
   tmp <- tmp[, keep_cols]
-  names(tmp) <- c('lake', 'param', 'date', 'value')
+  names(tmp) <- c('lake', 'param', 'date', 'value', 'Latitude', 'Longitude')
   
   tmp
     
 }
 
-
-# combine, average by day for each lake, make wide format
+# format output list
 tmp <- do.call('rbind', out_dat)
 tmp <- tmp[as.numeric(tmp$param) %in% c(78, 80, 410, 665), ]
+
+# # get lat lon for georeferencing to wbic
+# library(dplyr)
+# stat_pts <- select(tmp, lake, Latitude, Longitude) %>% mutate(stat = lake)
+# stat_pts$lake <- NULL
+# stat_pts <- unique(stat_pts)
+# stat_pts$Latitude <- as.numeric(stat_pts$Latitude)
+# stat_pts$Longitude <- as.numeric(stat_pts$Longitude)
+# stat_pts <- na.omit(stat_pts)
+# write.table(stat_pts, 'C:/Users/mbeck/Desktop/stat_pts.txt', quote = F, row.names = F, sep = ',')
+# 
+# # then some crap in arcmap
+# 
+# keys <- foreign::read.dbf('M:/GIS/WI_legacy_storet_int.dbf')
+# keys <- select(keys, stat, WATERBODY_, Latitude, Longitude)
+# keys <- unique(keys)
+# names(keys) <- c('stat', 'WBIC', 'Latitude', 'Longitude')
+# legacy_wi_storet_keys <- keys
+# save(legacy_wi_storet_keys, file = 'data/legacy_wi_storet_keys.RData')
+
+# station and wbic info
+data('legacy_wi_storet_keys')
+
+# average by day for each lake, make wide format
 tmp <- dcast(tmp, lake + date ~ param, value.var = 'value', 
   fun.aggregate = function(x) mean(x, na.rm = T))
-names(tmp) <- c('lake', 'date', 'secchi', 'color', 'alk', 'tp')
+names(tmp) <- c('stat', 'date', 'secchi', 'color', 'alk', 'tp')
 
-# 234123513467asdfasddf
+# merge with storet keys
+tmp <- left_join(tmp, legacy_wi_storet_keys, by = 'stat')
 
-# need to reference these stations with lake wbic
+# now get the wbics I have
+data('wi_potam')
+wi_wbic <- wi_potam$lake
+
+# done
+wi_legacy <- tmp %>% filter(WBIC %in% wi_wbic)
 
 ######
 # current WI storet
