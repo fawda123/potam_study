@@ -84,7 +84,7 @@ mn_potam[mn_potam$lake %in% '56076002', 'perim'] <- 15.058
 
 save(mn_potam, file = 'data/mn_potam.RData')
 
-##
+######
 # get wq variables
 
 rm(list = ls())
@@ -92,9 +92,12 @@ rm(list = ls())
 load(file = 'data/mn_potam.RData')
 
 # wq data from STORET, see 'storet_proc.r'
-load(file = 'data/allmn_wq.RData'
+load(file = 'data/allmn_wq.RData')
   
-# merge the data....
+# merge the data
+mn_potam <- dplyr::left_join(data.frame(mn_potam), allmn_wq, by = 'lake')
 
-##
+save(mn_potam, file = 'data/mn_potam.RData')
+
+######
 # get climate variables

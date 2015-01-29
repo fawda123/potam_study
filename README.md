@@ -8,11 +8,23 @@ Materials for manuscript describing drivers of Potamogeton species distribution 
 
 * `wi_potam.RData` Wisconsin data, frequency occurrence of potamogeton species and supporting data for each lake
 
+* `allmn_wq.RData` Combined legacy and recent STORET wq data for Minnesota lakes that I have aggregated across all dates, created in `storet_proc.R`
+
+* `allmn_wq.RData` Combined legacy and recent STORET wq data for Wisconsin lakes that I have aggregated across all dates, created in `storet_proc.R`
+
+* `legacy_wi_storet_keys.RData` spatial matches of legacy STORET stations and WBIC codes for Wisconsin, used to create wq data in `storet_proc.R`
+
+* `new_wi_storet_keys.RData` spatial matches of recent STORET stations and WBIC codes for Wisconsin, used to create wq data in `storet_proc.R`
+
+* `mnmet_dat.RData` Old master dataset for Minnesota from dissertation 
+
+* `wimet_dat.RData` Old master dataset for Wisconsin from dissertation
+
 Supporting data include morphometry, water quality, climate, and spatial variables:
 
-* morphometry: lake area (km2), perimeter (km), and max depth (km)
+* morphometry: lake area (km2), perimeter (km), and max depth (m)
 
-* water quality: alkalinity, water colour, secchi depth, and phosphorous
+* water quality: alkalinity (mg/L CaCO3), water colour (Pt-Co units), secchi depth (cm), and phosphorous (mg/L)
 
 * climate:  mean temp, maximum temp, minimum temp, precip, and altitude
 

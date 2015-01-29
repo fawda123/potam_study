@@ -10,6 +10,7 @@ rm(list = ls())
 
 library(foreach)
 library(doParallel)
+library(dplyr)
 
 load('data/mn_potam.RData')
 
@@ -105,6 +106,9 @@ dat$lake <- gsub('-', '', as.character(dat$lake))
 dat <- dat[!grepl('[a-z,A-Z]', dat$lake) & nchar(dat$lake) >= 7, ]
 dat$lake <- as.numeric(substr(dat$lake, 1, 8))
 
+# no need to convert units for this example, they are okay
+# table(dat$units, dat$param)
+
 # aggregate by day
 dat$date <- as.POSIXct(as.character(dat$date), format = '%Y-%m-%d %H:%M:%S')
 dat$date <- as.Date(dat$date)
@@ -144,6 +148,7 @@ rm(list = ls())
 
 library(foreach)
 library(doParallel)
+library(dplyr)
 
 load('data/wi_potam.RData')
 
@@ -241,6 +246,8 @@ wi_wbic <- wi_potam$lake
 
 # done
 wi_legacy <- tmp %>% filter(WBIC %in% wi_wbic)
+wi_legacy <- select(wi_legacy, WBIC, date, alk, color, secchi, tp)
+names(wi_legacy) <- c('wbic', 'date', 'alk', 'color', 'secchi', 'TP')
 
 ######
 # current WI storet
@@ -270,7 +277,6 @@ dat <- dat[dat$param %in% c('alk', 'TP', 'color', 'secchi'), ]
 
 ##
 # aggregate data by day but need to sort out unit conversions
-# need to figure out unit conversions on this for aggregation
 
 # remove leading/trailing white space for labels
 dat$units <- as.character(dat$units)
@@ -295,8 +301,6 @@ dat <- dat[!dat$units %in% c('ueq/L', 'mm', 'm', 'mg/kg'), ]
 
 ##
 # TP.....
-sel_dat <- dat$param %in% 'TP'
-plot(value ~ value, data = dat[sel_dat, ], col = factor(dat[sel_dat, 'units']))
 
 # 1 ppb = 0.001 mg/L 
 sel_dat <- dat$param %in% 'TP' & dat$units %in% 'ppb'
@@ -315,5 +319,22 @@ dat <- dcast(dat, wbic + date ~ param, value.var = 'value',
 
 # get only the lakes that I have
 load('data/wi_potam.RData')
-dat <- dat[dat$wbic %in% wi_potam$lake, ]
+wi_recent <- dat[dat$wbic %in% wi_potam$lake, ]
+
+## 
+# combine legacy with updated
+# average across dates
+# save
+
+# all dates.... need to describe this distribution in the manuscript
+allwi_wq <- rbind(wi_legacy, wi_recent)
+names(allwi_wq)[1] <- 'lake'
+
+# aggregated 
+allwi_wq<- select(allwi_wq, -date) %>% 
+  group_by(lake) %>% 
+  summarise_each(funs(mean(., na.rm = T)))
+
+save(allwi_wq, file = 'data/allwi_wq.RData')
+
 
