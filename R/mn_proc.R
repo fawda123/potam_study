@@ -100,4 +100,49 @@ mn_potam <- dplyr::left_join(data.frame(mn_potam), allmn_wq, by = 'lake')
 save(mn_potam, file = 'data/mn_potam.RData')
 
 ######
+# spatial lat/long
+
+rm(list = ls())
+
+# load data
+data(mn_potam)
+mn_poly <- foreign::read.dbf('M:/GIS/lake_dnrpy2_geocoord.dbf')
+names(mn_poly)[names(mn_poly) %in% 'DOWLKNUM'] <- 'lake'
+mn_poly <- dplyr::select(mn_poly, lake, Latitude, Longitude)
+mn_poly$lake <- as.numeric(as.character(mn_poly$lake))
+
+# merge and save
+mn_potam <- dplyr::left_join(mn_potam, mn_poly, by = 'lake')
+
+save(mn_potam, file = 'data/mn_potam.RData')
+
+######
 # get climate variables
+
+rm(list = ls())
+
+# get locations from master data file
+data(mn_potam)
+dat <- select(mn_potam, lake, Longitude, Latitude)
+dat <- na.omit(dat)
+coords <- select(dat, Longitude, Latitude)
+dat <- select(dat, lake)
+dat <- SpatialPointsDataFrame(coords, dat, proj4string = CRS("+proj=longlat +datum=WGS84"))
+
+# location of met data
+rast_path <- 'M:/GIS/climate'
+
+# mean annual temp
+mos <- 1:12
+
+r <- raster(paste0(rast_path, '/tmean/tmean_1'))
+r <- raster::extract(r, dat, layer = 1) / 10
+
+# max temp of warmest month
+
+# minimum temp of coolest month
+
+# precipitation of driest month
+
+# lake altitude
+

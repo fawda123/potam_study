@@ -96,5 +96,21 @@ wi_potam <- dplyr::left_join(wi_potam, allwi_wq, by = 'lake')
 
 save(wi_potam, file = 'data/wi_potam.RData')
 
-##
+######
+# spatial lat/long
+
+rm(list = ls())
+
+# load data
+data(wi_potam)
+wi_poly <- foreign::read.dbf('M:/GIS/WI_WBIC_geocoord.dbf')
+names(wi_poly)[names(wi_poly) %in% 'WATERBODY_'] <- 'lake'
+wi_poly <- dplyr::select(wi_poly, lake, Latitude, Longitude)
+
+# merge and save
+wi_potam <- dplyr::left_join(wi_potam, wi_poly, by = 'lake')
+
+save(wi_potam, file = 'data/wi_potam')
+
+######
 # get climate variables

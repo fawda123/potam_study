@@ -25,6 +25,8 @@ library(shinyapps)
 library(ade4)
 library(Hmisc)
 library(data.table)
+library(raster)
+library(dplyr)
 
 # functions to use
 source('R/funcs.r')
