@@ -110,7 +110,79 @@ wi_poly <- dplyr::select(wi_poly, lake, Latitude, Longitude)
 # merge and save
 wi_potam <- dplyr::left_join(wi_potam, wi_poly, by = 'lake')
 
-save(wi_potam, file = 'data/wi_potam')
+save(wi_potam, file = 'data/wi_potam.RData')
 
 ######
 # get climate variables
+
+rm(list = ls())
+
+source('R/funcs.r')
+
+# data and separate object for locations
+data(wi_potam)
+dat <- select(wi_potam, lake, Longitude, Latitude)
+dat <- na.omit(dat)
+coords <- select(dat, Longitude, Latitude)
+dat <- select(dat, lake)
+dat <- SpatialPointsDataFrame(coords, dat, proj4string = CRS("+proj=longlat +datum=WGS84"))
+
+# location of met data
+rast_path <- 'M:/GIS/climate'
+
+## 
+# mean annual temp
+# get by month, then average
+tmean<- clim_fun(paste0(rast_path, '/tmean/tmean_'), dat)
+
+# get annual means
+tmean <- rowMeans(tmean)
+
+# add to dat
+dat$tmean <- tmean / 10
+
+##
+# max temp of warmest month
+tmax <- clim_fun(paste0(rast_path, '/tmax/tmax_'), dat)
+
+# index of warmest month
+tmax<- apply(tmax, 1, function(x) x[which.max(x)])
+
+# add to dat
+dat$tmax <- tmax / 10
+
+##
+# minimum temp of coolest month
+tmin <- clim_fun(paste0(rast_path, '/tmin/tmin_'), dat)
+
+# index of coolest month
+tmin <- apply(tmin, 1, function(x) x[which.min(x)])
+
+# add to dat
+dat$tmin <- tmin /10
+
+##
+# precipitation of driest month mm
+prec <- clim_fun(paste0(rast_path, '/prec/prec_'), dat)
+
+# index of warmest month
+prec<- apply(prec, 1, function(x) x[which.min(x)])
+
+# add to dat
+dat$prec <- prec
+
+##
+# lake altitude
+alt <- raster::raster(paste0(rast_path, '/alt/alt'))
+alt <- raster::extract(alt, dat)
+
+# add to dat
+dat$alt <- alt
+
+##
+# merge with wi_potam, save
+dat <- select(data.frame(dat), -c(Longitude, Latitude))
+wi_potam <- left_join(wi_potam, data.frame(dat), by = 'lake')
+
+save(wi_potam, file = 'data/wi_potam.RData')
+

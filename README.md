@@ -26,6 +26,6 @@ Supporting data include morphometry, water quality, climate, and spatial variabl
 
 * water quality: alkalinity (mg/L CaCO3), water colour (Pt-Co units), secchi depth (cm), and phosphorous (mg/L)
 
-* climate:  mean temp, maximum temp, minimum temp, precip, and altitude
+* climate:  annual mean temp (C), maximum temp of warmest month (C), minimum temp of coolest month (C), precip of driest month (mm), and altitude above sea level (m)
 
 * spatial: lat, long

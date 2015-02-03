@@ -201,5 +201,29 @@ pot_freq <- function(survey) {
   
 }
 
-
+######
+#' Get climate data
+#' 
+#' Get climate data by sampling raster grids available from http://www.worldclim.org
+#' 
+#' @param path local path for downloaded data
+#' @param ext_dat SpatialPointsDataframe of points used for sampling
+#' @param mos numeric vector of months to sample
+#' 
+#' @return a matrix of sampled values with months as columns and locations as rows
+clim_fun <- function(path, ext_dat, mos = 1:12){
+  
+  out <- NULL
+  
+  for(mo in mos){
+    cat(mo, '\t')
+    r <- raster(paste0(path, mo))
+    r <- raster::extract(r, ext_dat)
+    out <- cbind(out, r)
+  }
+  
+  out <- as.matrix(out)
+  return(out)
+  
+}
 
