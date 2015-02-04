@@ -171,3 +171,56 @@ wi_potam <- left_join(wi_potam, data.frame(dat), by = 'lake')
 
 save(wi_potam, file = 'data/wi_potam.RData')
 
+######
+# use dataRetrieval
+# wi state code is 55, mn state code is 27
+# characteristicName - 'Alkalinity', 'Water transparency, Secchi disc', 'Phosphorus', 'Color' 
+library(dataRetrieval)
+wq_names <- c('Alkalinity', 'Water transparency, Secchi disc', 
+    'Phosphorus', 'Color')
+wq_sites <- whatWQPsites(statecode='US:55', characteristicName = wq_names, 
+  siteType = 'Lake, Reservoir, Impoundment')
+wq_dat <- readWQPdata(statecode='US:55', 
+  characteristicName = wq_names,
+  siteType = 'Lake, Reservoir, Impoundment'
+  )
+
+# merge locations w/ station data, make spatial object
+wq_sites <- select(wq_sites, LatitudeMeasure, LongitudeMeasure, MonitoringLocationIdentifier) 
+wq <- left_join(wq_dat, wq_sites, by = 'MonitoringLocationIdentifier')
+coordinates(wq) <- c('LongitudeMeasure', 'LatitudeMeasure')
+
+# lakes  that overlap stations
+wi_wbic <- readShapeSpatial('M:/GIS/WI_veglakes.shp')
+
+# clip wq by wi_wbic
+sel <- !is.na(wq %over% wi_wbic)[, 1]
+wq <- wq[sel, ]
+
+tmp <- gIntersection(wi_wbic, wq, byid = T)
+mrgdat <- data.frame(tmp)
+ids <- row.names(mrgdat) %>% 
+  strsplit(' ') %>% 
+  do.call('rbind', .)
+
+mrgdat <- data.frame(
+  mrgdat, 
+  wi_wbic_id = ids[, 1], 
+  wq_id = ids[, 2]
+)
+
+wq <- data.frame(wq) %>% 
+  select(CharacteristicName, ResultMeasureValue) 
+wq <- mutate(wq, wq_id = row.names(wq)) %>% 
+  left_join(mrgdat, by = 'wq_id')
+wbic_keys <- data.frame(wi_wbic)
+wbic_keys$wi_wbic_id <- row.names(wbic_keys)
+
+
+wq <- left_join(wq, wbic_keys, by = 'wi_wbic_id')
+wq <- select(wq, CharacteristicName, ResultMeasureValue, WATERBODY_)
+wq <- na.omit(wq)
+wq <- group_by(wq, WATERBODY_, CharacteristicName) %>% 
+  summarize(mean_val = mean(ResultMeasureValue))
+
+wq <- spread(wq, 'CharacteristicName', 'mean_val')
