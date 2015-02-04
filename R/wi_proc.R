@@ -8,22 +8,7 @@ library(data.table)
 
 source('R/funcs.r')
 
-# path <- 'M:/docs/veg_indics/macrophyte_data/WI lakes/converted/'
-# files <- dir(path)
-# 
-# widat_ls <- vector('list', length = length(files))
-# names(widat_ls) <- gsub('\\.txt$', '', files)
-# for(fl in files){
-#   nm <- gsub('\\.txt', '', fl)
-#   dat <- read.table(paste0(path, fl), header = T, sep = ',')
-#   dat[is.na(dat)] <- 0
-#   dat <- dat[, !names(dat) %in% c('Point', 'Latitude', 'Longitude')]
-#   names(dat)[names(dat) %in% 'Depth_ft'] <- 'AQPNT_Depth'
-#   widat_ls[[nm]] <- dat
-# }
-# save(widat_ls, file = 'data/widat_ls.RData')
-
-load(file = 'data/widat_ls.RData')
+load(file = 'M:/docs/veg_indics/veg_analyses/data/widat_ls.RData')
 
 res <- llply(widat_ls, 
   .fun = function(x){

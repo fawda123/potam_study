@@ -1,4 +1,9 @@
-# README
+---
+title: "README"
+output: 
+  html_document:
+    keep_md: yes
+---
 
 Materials for manuscript describing drivers of Potamogeton species distribution in temperate lakes
 
@@ -36,89 +41,25 @@ Supporting data for each lake include morphometry, water quality, climate, and s
 
 Not all data are complete for each dataset, mostly water quality data are missing:
 
-
-```r
+```{r}
 # MN
 data(mn_potam)
 dim(mn_potam)
-```
-
-```
-## [1] 332  41
-```
-
-```r
 dim(na.omit(mn_potam))
-```
-
-```
-## [1] 125  41
-```
-
-```r
 apply(mn_potam, 2, function(x) sum(is.na(x)))
-```
-
-```
-##      lake  YYYYMMDD        PA        PC        PE        PF       PFL 
-##         0         0         0         0         0         0         0 
-##        PG        PI        PN        PO      POAL       POF      POFR 
-##         0         0         0         0         0         0         0 
-##       PON       POP      POPU       POR       POS      POSB      POSN 
-##         0         0         0         0         0         0         0 
-##       POV        PP        PR        PS        PV        PZ     depth 
-##         0         0         0         0         0         0         5 
-##      area     perim    secchi     color       alk        tp  Latitude 
-##         0         0       156       193       177        55         1 
-## Longitude     tmean      tmax      tmin      prec       alt 
-##         1         1         1         1         1         1
-```
-
-```r
+  
 # WI
 data(wi_potam)
 dim(wi_potam)
-```
-
-```
-## [1] 189  41
-```
-
-```r
 dim(na.omit(wi_potam))
-```
-
-```
-## [1] 29 41
-```
-
-```r
 apply(wi_potam, 2, function(x) sum(is.na(x)))
-```
-
-```
-##      lake  YYYYMMDD        PA        PC        PD        PE        PF 
-##         0         0         0         0         0         0         0 
-##        PG        PI        PN        PO      POAL       POB      POFR 
-##         0         0         0         0         0         0         0 
-##       PON       POO       POP      POPU       POR       POS      POSB 
-##         0         0         0         0         0         0         0 
-##      POSN       POV        PP        PR        PS        PZ      area 
-##         0         0         0         0         0         0         0 
-##     depth     perim       alk     color    secchi        TP  Latitude 
-##         1         0       122       104       147       107         0 
-## Longitude     tmean      tmax      tmin      prec       alt 
-##         0         0         0         0         0         0
-```
-
-```r
+  
 # coverage map complete data
 library(maps)
 map('state', region = c('wisconsin', 'minnesota'))
 points(Latitude ~ Longitude, data = na.omit(mn_potam))
 points(Latitude ~ Longitude, data = na.omit(wi_potam)) 
-```
 
-![plot of chunk unnamed-chunk-1](README_files/figure-html/unnamed-chunk-1.png) 
+```
 
 

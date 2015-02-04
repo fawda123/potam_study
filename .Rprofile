@@ -1,6 +1,3 @@
-# # library path
-.libPaths('C:\\Users\\mbeck\\R\\library')
-
 # startup message
 cat('Potamogeton...\n')
 
