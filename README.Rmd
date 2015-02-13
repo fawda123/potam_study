@@ -9,9 +9,9 @@ Materials for manuscript describing drivers of Potamogeton species distribution 
 
 ## Data files
 
-* `allmn_wq.RData` Combined legacy and recent STORET wq data for Minnesota lakes that I have aggregated across all dates, created in `storet_proc.R`
+* `allmn_wq.RData` Combined legacy and recent STORET wq data for Minnesota lakes that I have aggregated across all dates, created in `storet_proc.R`, further modified in `wq_proc.r` to supplement missing data with DNR fisheries wq data
 
-* `allwi_wq.RData` Combined legacy and recent STORET wq data for Wisconsin lakes that I have aggregated across all dates, created in `storet_proc.R`
+* `allwi_wq.RData` Combined legacy and recent STORET wq data for Wisconsin lakes that I have aggregated across all dates, created in `storet_proc.R`, further modified in `wq_proc.r` to supplement missing data with LTER WI data
 
 * `legacy_wi_storet_keys.RData` spatial matches of legacy STORET stations and WBIC codes for Wisconsin, used to create wq data in `storet_proc.R`
 

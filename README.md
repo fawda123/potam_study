@@ -4,9 +4,9 @@ Materials for manuscript describing drivers of Potamogeton species distribution 
 
 ## Data files
 
-* `allmn_wq.RData` Combined legacy and recent STORET wq data for Minnesota lakes that I have aggregated across all dates, created in `storet_proc.R`
+* `allmn_wq.RData` Combined legacy and recent STORET wq data for Minnesota lakes that I have aggregated across all dates, created in `storet_proc.R`, further modified in `wq_proc.r` to supplement missing data with DNR fisheries wq data
 
-* `allwi_wq.RData` Combined legacy and recent STORET wq data for Wisconsin lakes that I have aggregated across all dates, created in `storet_proc.R`
+* `allwi_wq.RData` Combined legacy and recent STORET wq data for Wisconsin lakes that I have aggregated across all dates, created in `storet_proc.R`, further modified in `wq_proc.r` to supplement missing data with LTER WI data
 
 * `legacy_wi_storet_keys.RData` spatial matches of legacy STORET stations and WBIC codes for Wisconsin, used to create wq data in `storet_proc.R`
 
@@ -89,7 +89,7 @@ dim(na.omit(wi_potam))
 ```
 
 ```
-## [1] 29 41
+## [1] 78 41
 ```
 
 ```r
@@ -105,8 +105,8 @@ apply(wi_potam, 2, function(x) sum(is.na(x)))
 ##         0         0         0         0         0         0         0 
 ##      POSN       POV        PP        PR        PS        PZ      area 
 ##         0         0         0         0         0         0         0 
-##     depth     perim       alk     color    secchi        TP  Latitude 
-##         1         0       122       104       147       107         0 
+##     depth     perim    secchi     color       alk        tp  Latitude 
+##         1         0         1        82         7        76         0 
 ## Longitude     tmean      tmax      tmin      prec       alt 
 ##         0         0         0         0         0         0
 ```

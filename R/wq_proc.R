@@ -1,3 +1,6 @@
+######
+# this file was used to supplement storet wq data with other wq files for MN and WI
+
 ##
 # mn data
 
@@ -76,3 +79,83 @@ save(allmn_wq, file = 'data/allmn_wq.RData')
 
 ######
 # wisconsin
+
+# # # load raw LTER data
+# # raw_dat <- read.csv('M:/docs/veg_indics/wq_data/wilakeslimnoparams.csv', 
+# #   stringsAsFactors = F)
+# # 
+# # wi_wqdat <- raw_dat
+# # save(wi_wqdat, file = 'M:/docs/veg_indics/wq_data/wi_wqdat.RData')
+# 
+# ##
+# # load binary data
+# load('M:/docs/veg_indics/wq_data/wi_wqdat.RData')
+# 
+# # get only the lakes I have
+# data(wi_potam)
+# lks <- wi_potam$lake
+# 
+# tmp <- wi_wqdat[wi_wqdat$wbic %in% lks, ]
+# 
+# # get relevant parameters
+# # checked metadata to ensure all units were the same for each
+# # http://tropical.lternet.edu/knb/metacat?action=read&qformat=lter&sessionid=&docid=knb-lter-ntl.263.4&displaymodule=entity&entitytype=dataTable&entityindex=1
+# nms <- c('wbic', '_p_total$', 'sr6_color$', 'sr7_color$', 'alkalinity', 'secchi')
+# nms <- paste(nms, collapse = '|')
+# tmp <- tmp[, grepl(nms, names(tmp))]
+# 
+# # remove empty columns
+# empts <- apply(tmp, 2, function(x) sum(is.na(x))) == nrow(tmp)
+# tmp <- tmp[, !empts]
+# 
+# # average by parameter across sources
+# nms <- c('secchi', 'alkalinity', 'p_total', 'color')
+# res <- vector('list', length(nms))
+# names(res) <- nms
+# for(nm in nms){
+#   to_ave <- tmp[, grepl(nm, names(tmp))]
+#   res[[nm]] <- rowMeans(to_ave, na.rm = T)
+# }
+# 
+# # format
+# res <- do.call('cbind', res)
+# tmp <- data.frame(lake = tmp$wbic, res)
+# names(tmp) <- c('lake', 'secchi', 'alk', 'tp', 'color')
+# tmp <- tmp[, c('lake', 'alk', 'color', 'secchi', 'tp')]
+# 
+# # save
+# wi_wqdat_potam <- tmp
+# save(wi_wqdat_potam, file = 'M:/docs/veg_indics/wq_data/wi_wqdat_potam.RData')
+
+##
+# load data from storet (see 'storet_proc.R')
+load('M:/docs/veg_indics/wq_data/wi_wqdat_potam.RData')
+data(allwi_wq)
+
+# combine 
+tmp <- full_join(allwi_wq, wi_wqdat_potam, by = 'lake')
+
+# make vector of values
+tmp <- melt(tmp, id.var = 'lake')
+
+storet <- tmp[grepl('\\.x$', tmp$variable), 'value']
+lterwq <- tmp[grepl('\\.y$', tmp$variable), 'value']
+
+# get missing values in storet
+sel <- is.na(storet)
+storet[sel] <- lterwq[sel]
+
+# replace old storet with filled storet, format
+tmp <- tmp[grepl('\\.x$', tmp$variable), ]
+tmp$newq <- storet  
+
+tmp <- select(tmp, lake, variable, newq)
+tmp$variable <- gsub('\\.x$', '', tmp$variable)
+
+tmp <- tidyr::spread(tmp, key = 'variable', value = 'newq')
+tmp <- tmp[, c('lake', 'secchi', 'color', 'alk', 'tp')]
+
+# save, replace old allmn_wq
+allwi_wq <- tmp
+
+save(allwi_wq, file = 'data/allwi_wq.RData')

@@ -335,6 +335,8 @@ allwi_wq<- select(allwi_wq, -date) %>%
   group_by(lake) %>% 
   summarise_each(funs(mean(., na.rm = T)))
 
+names(allwi_wq) <- c('lake', 'alk', 'color', 'secchi', 'tp')
+
 save(allwi_wq, file = 'data/allwi_wq.RData')
 
 
