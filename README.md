@@ -26,7 +26,7 @@ Supporting data for each lake include morphometry, water quality, climate, and s
 
 * morphometry: lake area (km2), perimeter (km), and max depth (m)
 
-* water quality: alkalinity (mg/L CaCO3), water colour (Pt-Co units), secchi depth (cm), and phosphorous (mg/L)
+* water quality: alkalinity (mg/L CaCO3), water colour (Pt-Co units), secchi depth (m), and phosphorous (mg/L)
 
 * climate:  annual mean temp (C), maximum temp of warmest month (C), minimum temp of coolest month (C), precip of driest month (mm), and altitude above sea level (m)
 
@@ -52,7 +52,7 @@ dim(na.omit(mn_potam))
 ```
 
 ```
-## [1] 125  41
+## [1] 146  41
 ```
 
 ```r
@@ -69,7 +69,7 @@ apply(mn_potam, 2, function(x) sum(is.na(x)))
 ##       POV        PP        PR        PS        PV        PZ     depth 
 ##         0         0         0         0         0         0         5 
 ##      area     perim    secchi     color       alk        tp  Latitude 
-##         0         0       156       193       177        55         1 
+##         0         0       133       174       158        49         1 
 ## Longitude     tmean      tmax      tmin      prec       alt 
 ##         1         1         1         1         1         1
 ```
