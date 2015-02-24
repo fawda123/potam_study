@@ -111,14 +111,54 @@ apply(wi_potam, 2, function(x) sum(is.na(x)))
 ##         0         0         0         0         0         0
 ```
 
+Of the lakes that have complete datasets, most but not all have Potamogeton species present.
+
+
 ```r
+## MN
+
+# complete data
+mn_complete <- na.omit(mn_potam)
+
+# which have potamegonts
+mn_pots <- mn_complete[, grepl('^P', names(mn_complete))]
+mn_complete <- mn_complete[rowSums(mn_pots) > 0, ]
+
+# MN total
+dim(mn_complete)
+```
+
+```
+## [1] 143  41
+```
+
+```r
+## WI
+
+# complete data
+wi_complete <- na.omit(wi_potam)
+
+# which have potamegonts
+wi_pots <- wi_complete[, grepl('^P', names(wi_complete))]
+wi_complete <- wi_complete[rowSums(wi_pots) > 0, ]
+
+# WI total
+dim(wi_complete)
+```
+
+```
+## [1] 72 41
+```
+
+```r
+##
 # coverage map complete data
 library(maps)
 map('state', region = c('wisconsin', 'minnesota'))
-points(Latitude ~ Longitude, data = na.omit(mn_potam))
-points(Latitude ~ Longitude, data = na.omit(wi_potam)) 
+points(Latitude ~ Longitude, data = mn_complete)
+points(Latitude ~ Longitude, data = wi_complete) 
 ```
 
-![plot of chunk unnamed-chunk-1](README_files/figure-html/unnamed-chunk-1.png) 
+![plot of chunk unnamed-chunk-2](README_files/figure-html/unnamed-chunk-2.png) 
 
 

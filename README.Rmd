@@ -53,12 +53,41 @@ data(wi_potam)
 dim(wi_potam)
 dim(na.omit(wi_potam))
 apply(wi_potam, 2, function(x) sum(is.na(x)))
-  
+```
+
+Of the lakes that have complete datasets, most but not all have Potamogeton species present.
+
+```{r}
+## MN
+
+# complete data
+mn_complete <- na.omit(mn_potam)
+
+# which have potamegonts
+mn_pots <- mn_complete[, grepl('^P', names(mn_complete))]
+mn_complete <- mn_complete[rowSums(mn_pots) > 0, ]
+
+# MN total
+dim(mn_complete)
+
+## WI
+
+# complete data
+wi_complete <- na.omit(wi_potam)
+
+# which have potamegonts
+wi_pots <- wi_complete[, grepl('^P', names(wi_complete))]
+wi_complete <- wi_complete[rowSums(wi_pots) > 0, ]
+
+# WI total
+dim(wi_complete)
+
+##
 # coverage map complete data
 library(maps)
 map('state', region = c('wisconsin', 'minnesota'))
-points(Latitude ~ Longitude, data = na.omit(mn_potam))
-points(Latitude ~ Longitude, data = na.omit(wi_potam)) 
+points(Latitude ~ Longitude, data = mn_complete)
+points(Latitude ~ Longitude, data = wi_complete) 
 
 ```
 
