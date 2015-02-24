@@ -4,6 +4,8 @@ Materials for manuscript describing drivers of Potamogeton species distribution 
 
 ## Data files
 
+* `all_potam.RData` Combined and complete datasets for both MN and WI, contains lakes that have potamogetons and complete supporting data, created with `combine.R`
+
 * `allmn_wq.RData` Combined legacy and recent STORET wq data for Minnesota lakes that I have aggregated across all dates, created in `storet_proc.R`, further modified in `wq_proc.r` to supplement missing data with DNR fisheries wq data
 
 * `allwi_wq.RData` Combined legacy and recent STORET wq data for Wisconsin lakes that I have aggregated across all dates, created in `storet_proc.R`, further modified in `wq_proc.r` to supplement missing data with LTER WI data
@@ -152,11 +154,20 @@ dim(wi_complete)
 
 ```r
 ##
+# this file contains complete and combined data for both states
+data(all_potam)
+dim(all_potam)
+```
+
+```
+## [1] 215  45
+```
+
+```r
 # coverage map complete data
 library(maps)
 map('state', region = c('wisconsin', 'minnesota'))
-points(Latitude ~ Longitude, data = mn_complete)
-points(Latitude ~ Longitude, data = wi_complete) 
+points(Latitude ~ Longitude, data = all_potam)
 ```
 
 ![plot of chunk unnamed-chunk-2](README_files/figure-html/unnamed-chunk-2.png) 
