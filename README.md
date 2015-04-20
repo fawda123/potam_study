@@ -170,6 +170,6 @@ map('state', region = c('wisconsin', 'minnesota'))
 points(Latitude ~ Longitude, data = all_potam)
 ```
 
-![plot of chunk unnamed-chunk-2](README_files/figure-html/unnamed-chunk-2.png) 
+![](README_files/figure-html/unnamed-chunk-2-1.png) 
 
 
