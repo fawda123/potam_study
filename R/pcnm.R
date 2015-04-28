@@ -69,6 +69,25 @@ mite.PCNM.auto$Moran_I
 sel <- which(mite.PCNM.auto$Moran_I$Positive == TRUE)
 mite.PCNM.pos <- as.data.frame(mite.PCNM.auto$vectors[, sel])
 
+## now we run a global PCNM analysis on the detrended mite data
+
+# the detrended mite data are the residuals of an lm model (p. 243)
+# the lm evaluated the hellinger transformed data against spatial xy variables
+# this is like an rda
+# only detrend if the rda indicates a significant relationships of spatial variables with env vars
+tmp <- rda(mite.h, mite.xy)
+anova(tmp) # this is significant
+
+# detrend the mite data
+det_mod <- lm(as.matrix(mite.h) ~ ., data = mite.xy)
+mite.h.det <- resid(det_mod)
+
+mite.PCNM.rda <- rda(mite.h.det, mite.PCNM.pos)
+anova.cca(mite.PCNM.rda) # this is significant
+
+# the rda of the detrended environmental variables against the PCNM variables is significant
+# so we must do forward selection to get the msot significant PCNM axes
+##########124351235125
 
 ######
 # for potam data
