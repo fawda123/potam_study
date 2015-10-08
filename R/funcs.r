@@ -157,9 +157,12 @@ macrophyte.IBI<-function(survey,location=T)
 }
 
 #######
-# potamegetons sp freqs
+# potamegetons sp freqs (or counts)
 # survey is comma delimited txt file spp p/a, first column is depth
-pot_freq <- function(survey) {
+# counts is logical to return counts of points with species and additional column for total survey points
+# total survey points can be less than the sum of all species present because more than one species can be at a point
+# default is counts = F to return sp frequency (num. pts/tot pts)
+pot_freq <- function(survey, counts = FALSE) {
 
   pot_sp <- c('PB', 'POFR', 'POR', 'PR', 'POAL', 'PA', 'POB', 'PC', 'PD', 'PE', 'POF', 'PF', 'PG', 'PI', 'PN', 'PON', 'POO', 'PO', 'PP', 'POP', 'PPUL', 'POPU', 'POS', 'PS', 'PV', 'POV', 'PZ', 'POSB', 'PFL', 'POSN', 'PONF')
   
@@ -183,19 +186,28 @@ pot_freq <- function(survey) {
   Freq <- round(Cumsum/max(Cumsum), 2)
   
   data_prep <- cbind(subset(all_pts, (AQPNT_Depth <= ADPG)), Cumsum, Freq)
-  
+
   sp_freq <- colSums(rooted[, 1:ncol(rooted)])[2:ncol(rooted)]
-  sp_freq <- round(sp_freq/nrow(data_prep), 4)
+
+  # divide by survey pts to get freq if F
+  if(!counts)
+    sp_freq <- round(sp_freq/nrow(data_prep), 4)
   
-  pot_freq <- sp_freq[names(sp_freq) %in% pot_sp]
+  pot_val <- sp_freq[names(sp_freq) %in% pot_sp]
   
-  freq <- data.table(pot_freq, keys = names(pot_freq))
+  freq <- data.table(pot_val, keys = names(pot_val))
   spp <- data.table(pot_sp, keys = pot_sp)
     
   out <- merge(spp, freq, by = 'keys', all = T)
   out <- data.frame(out)
-  out[is.na(out$pot_freq), 'pot_freq'] <- 0
+  out[is.na(out$pot_val), 'pot_val'] <- 0
   out$keys <- NULL
+  
+  # add extra row for total effort if T
+  if(counts) out <- rbind(out, c('tot', nrow(data_prep)))
+  
+  # outputs as numeric
+  out$pot_val <- as.numeric(out$pot_val)
   
   return(out)
   

@@ -12,7 +12,7 @@ load(file = 'M:/docs/veg_indics/veg_analyses/data/widat_ls.RData')
 
 res <- llply(widat_ls, 
   .fun = function(x){
-    out <- try(pot_freq(x))
+    out <- try(pot_freq(x, counts = T))
     if('try-error' %in% class(out)) out <- NA
     out
   })
@@ -20,7 +20,7 @@ res <- llply(widat_ls,
 res_melt <- melt(res)
 
 # make wide format
-tmp <- reshape2::dcast(L1 + variable ~ pot_sp, data = res_melt, value = 'value')
+tmp <- tidyr::spread(res_melt, pot_sp, value)
 tmp$variable <- NULL
 
 # remove species not found

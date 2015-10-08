@@ -15,14 +15,14 @@ load(file = 'M:/docs/veg_indics/veg_analyses/data/mndat_ls.RData')
 
 res <- plyr::llply(mndat_ls, 
   .fun = function(x){
-    out <- try(pot_freq(x))
+    out <- try(pot_freq(x, counts = T))
     if('try-error' %in% class(out)) out <- NA
     out
   })
 
 res_melt <- reshape2::melt(res)
 
-tmp <- reshape2::dcast(L1 + variable ~ pot_sp, data = res_melt, value = 'value')
+tmp <- tidyr::spread(res_melt, pot_sp, value)
 tmp$variable <- NULL
 tmp <- data.frame(
   do.call('rbind', strsplit(tmp$L1, '_')), 
@@ -106,7 +106,7 @@ rm(list = ls())
 
 # load data
 data(mn_potam)
-mn_poly <- foreign::read.dbf('M:/GIS/lake_dnrpy2_geocoord.dbf')
+mn_poly <- foreign::read.dbf('M:/GIS/MN/lake_dnrpy2_geocoord.dbf')
 names(mn_poly)[names(mn_poly) %in% 'DOWLKNUM'] <- 'lake'
 mn_poly <- dplyr::select(mn_poly, lake, Latitude, Longitude)
 mn_poly$lake <- as.numeric(as.character(mn_poly$lake))
