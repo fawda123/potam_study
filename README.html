@@ -83,10 +83,9 @@ img {
 <h2>Data description</h2>
 <p>Supporting data for each lake include morphometry, water quality, climate, and spatial variables:</p>
 <ul>
-<li><p>morphometry: lake area (km2), perimeter (km), and max depth (m)</p></li>
-<li><p>water quality: alkalinity (mg/L CaCO3), water colour (Pt-Co units), secchi depth (m), and phosphorous (mg/L)</p></li>
+<li><p>local (morphometry and wq): lake area (km2), perimeter (km), and max depth (m), alkalinity (mg/L CaCO3), water colour (Pt-Co units), secchi depth (m), and phosphorous (mg/L)</p></li>
 <li><p>climate: annual mean temp (C), maximum temp of warmest month (C), minimum temp of coolest month (C), precip of driest month (mm), and altitude above sea level (m)</p></li>
-<li><p>spatial: lat, long</p></li>
+<li><p>spatial: PCNM eval of lat, long coordinates, only those with positive Moran values</p></li>
 </ul>
 </div>
 <div id="data-coverage" class="section level2">
@@ -95,9 +94,9 @@ img {
 <pre class="r"><code># MN
 data(mn_potam)
 dim(mn_potam)</code></pre>
-<pre><code>## [1] 332  41</code></pre>
+<pre><code>## [1] 332  43</code></pre>
 <pre class="r"><code>dim(na.omit(mn_potam))</code></pre>
-<pre><code>## [1] 146  41</code></pre>
+<pre><code>## [1] 146  43</code></pre>
 <pre class="r"><code>apply(mn_potam, 2, function(x) sum(is.na(x)))</code></pre>
 <pre><code>##      lake  YYYYMMDD        PA        PC        PE        PF       PFL 
 ##         0         0         0         0         0         0         0 
@@ -105,18 +104,20 @@ dim(mn_potam)</code></pre>
 ##         0         0         0         0         0         0         0 
 ##       PON       POP      POPU       POR       POS      POSB      POSN 
 ##         0         0         0         0         0         0         0 
-##       POV        PP        PR        PS        PV        PZ     depth 
-##         0         0         0         0         0         0         5 
-##      area     perim    secchi     color       alk        tp  Latitude 
-##         0         0       133       174       158        49         1 
-## Longitude     tmean      tmax      tmin      prec       alt 
-##         1         1         1         1         1         1</code></pre>
+##       POV        PP        PR        PS        PV        PZ       tot 
+##         0         0         0         0         0         0         0 
+##     depth      area     perim    secchi     color       alk        tp 
+##         5         0         0       133       174       158        49 
+##  Latitude Longitude     tmean      tmax      tmin      prec       alt 
+##         1         1         1         1         1         1         1 
+##  optional 
+##         1</code></pre>
 <pre class="r"><code># WI
 data(wi_potam)
 dim(wi_potam)</code></pre>
-<pre><code>## [1] 189  41</code></pre>
+<pre><code>## [1] 189  43</code></pre>
 <pre class="r"><code>dim(na.omit(wi_potam))</code></pre>
-<pre><code>## [1] 78 41</code></pre>
+<pre><code>## [1] 78 43</code></pre>
 <pre class="r"><code>apply(wi_potam, 2, function(x) sum(is.na(x)))</code></pre>
 <pre><code>##      lake  YYYYMMDD        PA        PC        PD        PE        PF 
 ##         0         0         0         0         0         0         0 
@@ -124,12 +125,14 @@ dim(wi_potam)</code></pre>
 ##         0         0         0         0         0         0         0 
 ##       PON       POO       POP      POPU       POR       POS      POSB 
 ##         0         0         0         0         0         0         0 
-##      POSN       POV        PP        PR        PS        PZ      area 
+##      POSN       POV        PP        PR        PS        PZ       tot 
 ##         0         0         0         0         0         0         0 
-##     depth     perim    secchi     color       alk        tp  Latitude 
-##         1         0         1        82         7        76         0 
-## Longitude     tmean      tmax      tmin      prec       alt 
-##         0         0         0         0         0         0</code></pre>
+##      area     depth     perim    secchi     color       alk        tp 
+##         0         1         0         1        82         7        76 
+##  Latitude Longitude     tmean      tmax      tmin      prec       alt 
+##         0         0         0         0         0         0         0 
+##  optional 
+##         0</code></pre>
 <p>Of the lakes that have complete datasets, most but not all have Potamogeton species present.</p>
 <pre class="r"><code>## MN
 
@@ -142,7 +145,7 @@ mn_complete &lt;- mn_complete[rowSums(mn_pots) &gt; 0, ]
 
 # MN total
 dim(mn_complete)</code></pre>
-<pre><code>## [1] 143  41</code></pre>
+<pre><code>## [1] 143  43</code></pre>
 <pre class="r"><code>## WI
 
 # complete data
@@ -154,12 +157,12 @@ wi_complete &lt;- wi_complete[rowSums(wi_pots) &gt; 0, ]
 
 # WI total
 dim(wi_complete)</code></pre>
-<pre><code>## [1] 72 41</code></pre>
+<pre><code>## [1] 72 43</code></pre>
 <pre class="r"><code>##
 # this file contains complete and combined data for both states
 data(all_potam)
 dim(all_potam)</code></pre>
-<pre><code>## [1] 215  45</code></pre>
+<pre><code>## [1] 215 104</code></pre>
 <pre class="r"><code># coverage map complete data
 library(maps)
 map('state', region = c('wisconsin', 'minnesota'))

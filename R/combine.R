@@ -49,6 +49,23 @@ row.names(all_potam) <- seq(1, nrow(all_potam))
 # remove optional column
 all_potam$optional <- NULL
 
+##
+# get PCNM eigen vectors with positive Moran
+# see pcnm.R
+
+library(PCNM)
+
+potam.xy <- all_potam[, c('Longitude', 'Latitude')]
+
+potam.xy.d1 <- dist(potam.xy)
+
+potam.PCNM <- PCNM(potam.xy.d1)
+potam.PCNM <- potam.PCNM$vectors[, potam.PCNM$Moran_I$Positive]
+potam.PCNM <- data.frame(potam.PCNM)
+names(potam.PCNM) <- paste0('V', 1:ncol(potam.PCNM))
+
+all_potam <- data.frame(all_potam, potam.PCNM)
+
 # save
 save(all_potam, file = 'data/all_potam.RData')
 

@@ -26,13 +26,11 @@ Materials for manuscript describing drivers of Potamogeton species distribution 
 
 Supporting data for each lake include morphometry, water quality, climate, and spatial variables:
 
-* morphometry: lake area (km2), perimeter (km), and max depth (m)
-
-* water quality: alkalinity (mg/L CaCO3), water colour (Pt-Co units), secchi depth (m), and phosphorous (mg/L)
+* local (morphometry and wq): lake area (km2), perimeter (km), and max depth (m), alkalinity (mg/L CaCO3), water colour (Pt-Co units), secchi depth (m), and phosphorous (mg/L)
 
 * climate:  annual mean temp (C), maximum temp of warmest month (C), minimum temp of coolest month (C), precip of driest month (mm), and altitude above sea level (m)
 
-* spatial: lat, long
+* spatial: PCNM eval of lat, long coordinates, only those with positive Moran values
 
 ## Data coverage
 
@@ -46,7 +44,7 @@ dim(mn_potam)
 ```
 
 ```
-## [1] 332  41
+## [1] 332  43
 ```
 
 ```r
@@ -54,7 +52,7 @@ dim(na.omit(mn_potam))
 ```
 
 ```
-## [1] 146  41
+## [1] 146  43
 ```
 
 ```r
@@ -68,12 +66,14 @@ apply(mn_potam, 2, function(x) sum(is.na(x)))
 ##         0         0         0         0         0         0         0 
 ##       PON       POP      POPU       POR       POS      POSB      POSN 
 ##         0         0         0         0         0         0         0 
-##       POV        PP        PR        PS        PV        PZ     depth 
-##         0         0         0         0         0         0         5 
-##      area     perim    secchi     color       alk        tp  Latitude 
-##         0         0       133       174       158        49         1 
-## Longitude     tmean      tmax      tmin      prec       alt 
-##         1         1         1         1         1         1
+##       POV        PP        PR        PS        PV        PZ       tot 
+##         0         0         0         0         0         0         0 
+##     depth      area     perim    secchi     color       alk        tp 
+##         5         0         0       133       174       158        49 
+##  Latitude Longitude     tmean      tmax      tmin      prec       alt 
+##         1         1         1         1         1         1         1 
+##  optional 
+##         1
 ```
 
 ```r
@@ -83,7 +83,7 @@ dim(wi_potam)
 ```
 
 ```
-## [1] 189  41
+## [1] 189  43
 ```
 
 ```r
@@ -91,7 +91,7 @@ dim(na.omit(wi_potam))
 ```
 
 ```
-## [1] 78 41
+## [1] 78 43
 ```
 
 ```r
@@ -105,12 +105,14 @@ apply(wi_potam, 2, function(x) sum(is.na(x)))
 ##         0         0         0         0         0         0         0 
 ##       PON       POO       POP      POPU       POR       POS      POSB 
 ##         0         0         0         0         0         0         0 
-##      POSN       POV        PP        PR        PS        PZ      area 
+##      POSN       POV        PP        PR        PS        PZ       tot 
 ##         0         0         0         0         0         0         0 
-##     depth     perim    secchi     color       alk        tp  Latitude 
-##         1         0         1        82         7        76         0 
-## Longitude     tmean      tmax      tmin      prec       alt 
-##         0         0         0         0         0         0
+##      area     depth     perim    secchi     color       alk        tp 
+##         0         1         0         1        82         7        76 
+##  Latitude Longitude     tmean      tmax      tmin      prec       alt 
+##         0         0         0         0         0         0         0 
+##  optional 
+##         0
 ```
 
 Of the lakes that have complete datasets, most but not all have Potamogeton species present.
@@ -131,7 +133,7 @@ dim(mn_complete)
 ```
 
 ```
-## [1] 143  41
+## [1] 143  43
 ```
 
 ```r
@@ -149,7 +151,7 @@ dim(wi_complete)
 ```
 
 ```
-## [1] 72 41
+## [1] 72 43
 ```
 
 ```r
@@ -160,7 +162,7 @@ dim(all_potam)
 ```
 
 ```
-## [1] 215  45
+## [1] 215 104
 ```
 
 ```r
