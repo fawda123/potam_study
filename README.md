@@ -18,6 +18,8 @@ Materials for manuscript describing drivers of Potamogeton species distribution 
 
 * `new_wi_storet_keys.RData` spatial matches of recent STORET stations and WBIC codes for Wisconsin, used to create wq data in `storet_proc.R`
 
+* `spp_var.RData` variance partitioning by species
+
 * `wi_potam.RData` Wisconsin data, frequency occurrence of potamogeton species and supporting data for each lake
 
 * `wimet_dat.RData` Old master dataset for Wisconsin from dissertation

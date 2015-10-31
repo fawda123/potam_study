@@ -106,6 +106,11 @@ print(p1, vp = v1)
 print(pinset, vp = v2)
 dev.off()
 
+##
+# barplot of var part by species
+
+load(file = 'data/spp_var.RData')
+
 ######
 # tables
 
