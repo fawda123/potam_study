@@ -5,6 +5,8 @@ library(ggplot2)
 library(maptools)
 library(sp)
 library(RColorBrewer)
+library(dplyr)
+library(tidyr)
 
 ######
 # figs
@@ -103,3 +105,37 @@ v2 <- viewport(width = 0.25, height = 0.25, x = 0.6, y = 0.87)
 print(p1, vp = v1) 
 print(pinset, vp = v2)
 dev.off()
+
+######
+# tables
+
+##
+# summary table
+
+load(file = 'data/all_potam.RData')
+
+# summarize variables by category
+loc <- select(all_potam, alk, color, tp, secchi, area, depth, perim) %>% 
+  gather('var', 'val') %>% 
+  group_by(var) %>% 
+  summarise(
+    mean = mean(val, na.rm = T), 
+    min = min(val, na.rm = T),
+    max = max(val, na.rm = T), 
+    sd = sd(val, na.rm = T)
+  )
+cli <- select(all_potam, tmean, tmax, tmin, prec, alt) %>% 
+  gather('var', 'val') %>% 
+  group_by(var) %>% 
+  summarise(
+    mean = mean(val, na.rm = T), 
+    min = min(val, na.rm = T),
+    max = max(val, na.rm = T), 
+    sd = sd(val, na.rm = T)
+  )
+
+out <- rbind(loc, cli) %>% 
+  data.frame
+
+write.csv(out, 'tabs/tab1.csv', quote = F, row.names = F)
+
