@@ -111,6 +111,36 @@ dev.off()
 
 load(file = 'data/spp_var.RData')
 
+# long format and minor name formatting
+toplo <- gather(spp_var, 'spp', 'exp', -var) %>% 
+  mutate(
+    spp = gsub('\\.', ' ', spp),
+    spp = gsub('^P  ', 'P\\. ', spp),
+    spp = gsub('^Asseml  comp', 'Assemb. comp.', spp), 
+    spp = factor(spp, levels = unique(spp)),
+    var = gsub('^All three groups', 'All', var), 
+    var = gsub('\\+', ' + ', var),
+    var = factor(var, levels = unique(var))
+  )
+
+p <- ggplot(toplo, aes(x = spp, y = exp, fill = var)) + 
+  geom_bar(stat = 'identity') + 
+  theme_bw() +
+  theme(
+    legend.title = element_blank(),
+    axis.title.x = element_blank(), 
+    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0), 
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank()
+    ) + 
+  scale_fill_manual(values = RColorBrewer::brewer.pal(length(unique(toplo$var)), 'Spectral')) + 
+  scale_y_continuous('% explained')
+  
+# save
+tiff('figs/fig2.tif', height = 4, width = 7, units = 'in', compression = 'lzw', res = 300, family = 'serif')
+print(p)
+dev.off()
+
 ######
 # tables
 
