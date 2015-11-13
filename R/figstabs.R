@@ -110,9 +110,10 @@ load(file = 'data/spp_var.RData')
 # long format and minor name formatting
 toplo <- gather(spp_var, 'spp', 'exp', -var) %>% 
   mutate(
+    spp = as.character(spp),
     spp = gsub('\\.', ' ', spp),
     spp = gsub('^P  ', 'P\\. ', spp),
-    spp = gsub('^Assemb\\.\\.comp', 'Assemb. comp.', spp), 
+    spp = gsub('^Assemb\\.\\.comp\\.$', 'Assemb\\. comp\\.', spp), 
     spp = factor(spp, levels = unique(spp)),
     var = gsub('^All three groups', 'All', var), 
     var = factor(var, levels = unique(var))
@@ -181,13 +182,17 @@ write.csv(out, 'tabs/tab1.csv', quote = F, row.names = F)
 load(file = 'data/spp_var.RData')
 
 # long format and minor name formatting
-toplo <- gather(spp_var, 'spp', 'exp', -X) %>% 
+totab <- gather(spp_var, 'spp', 'exp', -var) %>% 
   mutate(
     spp = gsub('\\.', ' ', spp),
     spp = gsub('^P  ', 'P\\. ', spp),
-    spp = gsub('^Assemb\\.\\.comp', 'Assemb. comp.', spp), 
+    spp = gsub('^Assemb\\.\\.', 'Assemb\\.', spp), 
     spp = factor(spp, levels = unique(spp)),
     var = gsub('^All three groups', 'All', var), 
     var = factor(var, levels = unique(var))
-  )
+  ) %>% 
+  spread(var, exp)
 
+names(totab)[names(totab) %in% 'spp'] <- ''
+
+write.csv(totab, 'tabs/tab2.csv', quote = F, row.names = F)
