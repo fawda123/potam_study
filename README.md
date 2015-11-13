@@ -176,4 +176,9 @@ points(Latitude ~ Longitude, data = all_potam)
 
 ![](README_files/figure-html/unnamed-chunk-2-1.png) 
 
+## Qs
 
+* show figs/tabs
+* negative explained variance, floor at zero?
+* variable selection for pcnm axes?
+* species richness was estimated as sum of counts for each survey (not really richness)? tot is number of total points in the survey?

@@ -1,12 +1,8 @@
 ######
 # figs and tables
 
-library(ggplot2)
-library(maptools)
-library(sp)
-library(RColorBrewer)
-library(dplyr)
-library(tidyr)
+
+
 
 ######
 # figs
@@ -116,11 +112,16 @@ toplo <- gather(spp_var, 'spp', 'exp', -var) %>%
   mutate(
     spp = gsub('\\.', ' ', spp),
     spp = gsub('^P  ', 'P\\. ', spp),
-    spp = gsub('^Asseml  comp', 'Assemb. comp.', spp), 
+    spp = gsub('^Assemb\\.\\.comp', 'Assemb. comp.', spp), 
     spp = factor(spp, levels = unique(spp)),
     var = gsub('^All three groups', 'All', var), 
-    var = gsub('\\+', ' + ', var),
     var = factor(var, levels = unique(var))
+  ) %>% 
+  filter(var != 'Unexplained') %>% 
+  mutate(
+    var = droplevels(var),
+    var = factor(var, labels = sort(as.character(unique(var))), 
+      levels = sort(as.character(unique(var))))
   )
 
 p <- ggplot(toplo, aes(x = spp, y = exp, fill = var)) + 
@@ -145,7 +146,7 @@ dev.off()
 # tables
 
 ##
-# summary table
+# tab 1 summary table
 
 load(file = 'data/all_potam.RData')
 
@@ -173,4 +174,20 @@ out <- rbind(loc, cli) %>%
   data.frame
 
 write.csv(out, 'tabs/tab1.csv', quote = F, row.names = F)
+
+##
+# tab 2 explained variance
+
+load(file = 'data/spp_var.RData')
+
+# long format and minor name formatting
+toplo <- gather(spp_var, 'spp', 'exp', -X) %>% 
+  mutate(
+    spp = gsub('\\.', ' ', spp),
+    spp = gsub('^P  ', 'P\\. ', spp),
+    spp = gsub('^Assemb\\.\\.comp', 'Assemb. comp.', spp), 
+    spp = factor(spp, levels = unique(spp)),
+    var = gsub('^All three groups', 'All', var), 
+    var = factor(var, levels = unique(var))
+  )
 
