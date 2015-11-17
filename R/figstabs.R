@@ -1,7 +1,10 @@
 ######
 # figs and tables
 
-
+library(maptools)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
 
 
 ######
@@ -111,9 +114,8 @@ load(file = 'data/spp_var.RData')
 toplo <- gather(spp_var, 'spp', 'exp', -var) %>% 
   mutate(
     spp = as.character(spp),
-    spp = gsub('\\.', ' ', spp),
-    spp = gsub('^P  ', 'P\\. ', spp),
-    spp = gsub('^Assemb\\.\\.comp\\.$', 'Assemb\\. comp\\.', spp), 
+    spp = gsub('^P\\.\\.', 'P\\. ', spp),
+    spp = gsub('Assemb\\.\\.comp\\.', 'Assemb\\. comp\\.', spp), 
     spp = factor(spp, levels = unique(spp)),
     var = gsub('^All three groups', 'All', var), 
     var = factor(var, levels = unique(var))

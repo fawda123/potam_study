@@ -239,3 +239,79 @@ clim_fun <- function(path, ext_dat, mos = 1:12){
   
 }
 
+######
+# run partial redundancy analysis or partial least squares, then variance partitioning
+#
+# dat_in: all_potam data frame
+# resp_in: chr string of variables to model (one to many), uses regexpr matching to select from dat_in
+pot_var <- function(dat_in, resp_nm){
+  
+  library(vegan)
+  library(packfor)
+  library(dplyr)
+  
+  # names of variables to select
+  loc_nm <- c('alk','color', 'tp', 'secchi', 'area', 'depth', 'perim')
+  cli_nm <- c('tmean', 'tmax', 'tmin', 'prec', 'alt')
+  spa_nm <- '^V'
+  
+  # subset dat_in by explanatory variable sets
+  loc <- select(dat_in, matches(paste(loc_nm, collapse = '|')))
+  cli <- select(dat_in, matches(paste(cli_nm, collapse = '|')))
+  spa <- select(dat_in, matches(spa_nm, ignore.case = F))
+  
+  # subset dat_in by response variable(s)
+  res <- select(dat_in, matches(resp_nm, ignore.case = F))
+  
+  # use RDA if res more than one variable
+  # otherwise, glm
+  if(ncol(res) > 1){
+    
+    loc_sel <- forward.sel(res, loc)
+    loc <- loc[, names(loc) %in% loc_sel$variables]
+    cli_sel <- forward.sel(res, cli)
+    cli <- cli[, names(cli) %in% cli_sel$variables]
+    spa_sel <- forward.sel(res, spa)
+    spa <- spa[, names(spa) %in% spa_sel$variables]
+    
+    mod <- varpart(Y = res, X = loc, cli, spa, transfo = 'hel')
+     
+  } else {
+
+    # strip resp_nm for mods
+    resp_nm <- gsub('\\^|\\$', '', resp_nm)
+    
+    # local mod
+    modloc <- paste0(resp_nm, ' ~ ', paste(loc_nm, collapse = ' + '))
+    modloc <- glm(as.formula(modloc), family = poisson(link = 'log'), 
+      data = dat_in, offset = log(tot)) %>% 
+      MASS::stepAIC(., direction = 'both', criterion = 'AIC', trace = F)
+    modloc <- formula(modloc)[c(1, 3)]
+    
+    # climate mod
+    modcli <- paste0(resp_nm, ' ~ ', paste(cli_nm, collapse = ' + '))
+    modcli <- glm(as.formula(modcli), family = poisson(link = 'log'), 
+      data = dat_in, offset = log(tot)) %>% 
+      MASS::stepAIC(., direction = 'both', criterion = 'AIC', trace = F)
+    modcli <- formula(modcli)[c(1, 3)]
+    
+    # spatial mod, stepwise, then get formula
+    form <- grep(spa_nm, names(dat_in), value = T) %>% 
+      paste(., collapse = ' + ') %>% 
+      paste0(resp_nm, ' ~ ', .) %>% 
+      as.formula
+    modspa <- glm(form, data = dat_in, family = poisson(link = 'log'), offset = log(tot)) %>% 
+      MASS::stepAIC(., direction = 'both', criterion = 'AIC', trace = F)
+    modspa <- formula(modspa)[c(1, 3)]
+    
+    # variance partitioning
+    mod <- varpart(res[, 1], modloc, modcli, modspa, data = dat_in)
+        
+  }
+
+  # get fractions of variance, 
+  # pure x1, pure x2, pure x3, shared x1/x2, shared x2/x3, shared x1/x3, shared x1/x2/x3
+  vars <- mod$part$indfract[, 'Adj.R.square']
+  return(vars) 
+   
+}
