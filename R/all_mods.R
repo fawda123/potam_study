@@ -42,4 +42,29 @@ for(pot in pot_nms){
   
 }
 
+##
+# combine all results for those that worked
+spp_var <- do.call('rbind', pot_mod) %>% 
+  na.omit %>% 
+  .[sort(row.names(.)), ] %>% 
+  rbind(cc_mod, rich_mod, .) %>% 
+  t %>% 
+  data.frame(
+    var = row.names(.), 
+    row.names = seq(1, nrow(.)),
+    .
+    ) %>% 
+  mutate(
+    var = factor(
+      var, 
+      levels = c('loc', 'cli', 'spa', 'loc + cli', 'cli + spa', 'loc + spa', 'loc + cli + spa', 'res'),
+      labels = c('Local', 'Climate', 'Spatial', 'Local + Climate', 'Climate + Spatial', 'Local + Spatial', 'Local + Climate + Spatial', 'Unexplained')
+    )
+  )
 
+# col names formatting
+names(spp_var)[grep('^P', names(spp_var))] <- pot_nms(names(spp_var)[grep('^P', names(spp_var))])
+names(spp_var)[names(spp_var) %in% c('cc_mod', 'rich_mod')] <- c('Assemb. comp', 'Richness')
+
+# save
+save(spp_var, file = 'data/spp_var.RData')

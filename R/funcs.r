@@ -244,6 +244,8 @@ clim_fun <- function(path, ext_dat, mos = 1:12){
 #
 # dat_in: all_potam data frame
 # resp_in: chr string of variables to model (one to many), uses regexpr matching to select from dat_in
+# 
+# output is numeric vector pure x1, pure x2, pure x3, shared x1/x2, shared x2/x3, shared x1/x3, shared x1/x2/x3, residual, where x1 is loc, x2 is cli, x3 is spa
 pot_var <- function(dat_in, resp_nm){
   
   library(vegan)
@@ -310,8 +312,40 @@ pot_var <- function(dat_in, resp_nm){
   }
 
   # get fractions of variance, 
-  # pure x1, pure x2, pure x3, shared x1/x2, shared x2/x3, shared x1/x3, shared x1/x2/x3
+  # pure x1, pure x2, pure x3, shared x1/x2, shared x2/x3, shared x1/x3, shared x1/x2/x3, residual
   vars <- mod$part$indfract[, 'Adj.R.square']
+  names(vars) <- c('loc', 'cli', 'spa', 'loc + cli', 'cli + spa', 'loc + spa', 'loc + cli + spa', 'res')
   return(vars) 
    
+}
+
+######
+# switch potamogeton names between full species and DNR codes
+# 
+# chr_in is vector of codes or species
+# to_spp is logical indicating codes to species (TRUE) or species to codes (FALSE)
+# abb_spp is logical indicating if Potamogeon is changed to P.
+#
+pot_nms <- function(chr_in, to_spp = TRUE, abb_spp = TRUE){
+  
+  pot_sp <- c('PB', 'POFR', 'POR', 'PR', 'POAL', 'PA', 'POB', 'PC', 'PD', 'PE', 'POF', 'PF', 'PG', 'PI', 'PN', 'PON', 'POO', 'PO', 'PP', 'POP', 'PPUL', 'POPU', 'POS', 'PS', 'PV', 'POV', 'PZ', 'POSB', 'PFL', 'POSN', 'PONF')
+  
+  pot_comm <- c('Potamogeton berchtoldi', 'Potamogeton friesii', 'Potamogeton richardsoni', 'Potamogeton robbinsii', 'Potamogeton alpinus', 'Potamogeton amplifolius', 'Potamogeton bicupulatus', 'Potamogeton crispus', 'Potamogeton diversifolius', 'Potamogeton epihydrus', 'Potamogeton filiformis', 'Potamogeton foliosus', 'Potamogeton gramineus', 'Potamogeton illinoensis', 'Potamogeton natans', 'Potamogeton nodosus', 'Potamogeton oakesianus', 'Potamogeton obtusifolius', 'Potamogeton pectinatus', 'Potamogeton praelongus', 'Potamogeton pulcher', 'Potamogeton pusillus', 'Potamogeton spirillus', 'Potamogeton strictifolius', 'Potamogeton vaginatus', 'Potamogeton vaseyi', 'Potamogeton zosteriformis', 'Broad-leaf Pondweed Group', 'Floating-leaf Water Smartweed Group', 'Narrow-leaf Pondweed Group', 'Narrow-leaf Pondweed w/ Floating Leaves Group')
+  
+  # codes to species
+  if(to_spp){
+    
+    out <- pot_comm[match(chr_in, pot_sp)]
+    
+    if(abb_spp) out <- gsub('Potamogeton', 'P\\.', out, ignore.case = FALSE)
+    
+  # species to codes    
+  } else {
+    
+    out <- pot_sp[match(chr_in, pot_comm)]
+    
+  }
+  
+  return(out)
+  
 }

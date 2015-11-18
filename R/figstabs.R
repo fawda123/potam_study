@@ -110,22 +110,18 @@ dev.off()
 
 load(file = 'data/spp_var.RData')
 
-# long format and minor name formatting
+# long format, minor name formatting, neg exp var floored at zero
 toplo <- gather(spp_var, 'spp', 'exp', -var) %>% 
   mutate(
-    spp = as.character(spp),
-    spp = gsub('^P\\.\\.', 'P\\. ', spp),
-    spp = gsub('Assemb\\.\\.comp\\.', 'Assemb\\. comp\\.', spp), 
-    spp = factor(spp, levels = unique(spp)),
-    var = gsub('^All three groups', 'All', var), 
-    var = factor(var, levels = unique(var))
+    exp = pmax(0, exp), 
+    var = gsub('^Local \\+ Climate \\+ Spatial$', 'All', var),
+    var = factor(
+      var, 
+      levels = c('Local', 'Climate', 'Spatial', 'Local + Climate', 'Climate + Spatial', 'Local + Spatial', 'Local + Climate + Spatial', 'Unexplained'), 
+      labels = c('Local', 'Climate', 'Space', 'Local + Climate', 'Climate + Space', 'Local + Space', 'All', 'Unexplained'))
   ) %>% 
   filter(var != 'Unexplained') %>% 
-  mutate(
-    var = droplevels(var),
-    var = factor(var, labels = sort(as.character(unique(var))), 
-      levels = sort(as.character(unique(var))))
-  )
+  mutate(var = droplevels(var))
 
 p <- ggplot(toplo, aes(x = spp, y = exp, fill = var)) + 
   geom_bar(stat = 'identity') + 
