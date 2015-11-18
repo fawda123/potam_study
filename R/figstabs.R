@@ -5,7 +5,7 @@ library(maptools)
 library(ggplot2)
 library(dplyr)
 library(tidyr)
-
+library(vegan)
 
 ######
 # figs
@@ -139,6 +139,47 @@ p <- ggplot(toplo, aes(x = spp, y = exp, fill = var)) +
 # save
 tiff('figs/fig2.tif', height = 4, width = 7, units = 'in', compression = 'lzw', res = 300, family = 'serif')
 print(p)
+dev.off()
+
+
+##
+# rda biplots of species by local and climate variables
+
+data(all_potam)
+data(spp_var)
+
+# select species in spp_var (models that worked) from all_potam, hellinger transform
+pots <- grep('^P\\.', names(spp_var), ignore.case = F, value = T) %>% 
+  gsub('^P\\.', 'Potamogeton', .) %>% 
+  pot_nms(., to_spp = FALSE)
+spp <- select(all_potam, matches(paste(pots, collapse = '|'), ignore.case = F)) %>% 
+  decostand(., method = 'hellinger')
+
+# exp variable columns
+loc_nm <- c('alk','color', 'tp', 'secchi', 'area', 'depth', 'perim')
+cli_nm <- c('tmean', 'tmax', 'tmin', 'prec', 'alt')
+spa_nm <- '^V'
+loc <- select(all_potam, matches(paste(loc_nm, collapse = '|')))
+cli <- select(all_potam, matches(paste(cli_nm, collapse = '|')))
+spa <- select(all_potam, matches(spa_nm, ignore.case = F))
+
+# rda mods
+mod_loc <- rda(spp, loc)
+mod_cli <- rda(spp, cli)
+
+# biplots
+tiff('figs/fig3.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
+
+plot(mod_loc, type = 'n', xlim = c(-1, 1))
+points(mod_loc, pch=21, col=scales::alpha("red", 0.4), bg=scales::alpha("green", 0.4), cex=0.8)
+text(mod_loc, dis = 'cn',  axis.bp = FALSE)
+text(mod_loc, "species", col="blue", cex=0.8)
+
+plot(mod_cli, type = 'n', xlim = c(-1, 1))
+points(mod_cli, pch=21, col=scales::alpha("red", 0.4), bg=scales::alpha("green", 0.4), cex=0.8)
+text(mod_cli, dis = 'cn', axis.bp = FALSE)
+text(mod_cli, "species", col="blue", cex=0.8)
 dev.off()
 
 ######
