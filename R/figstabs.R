@@ -114,14 +114,18 @@ load(file = 'data/spp_var.RData')
 toplo <- gather(spp_var, 'spp', 'exp', -var) %>% 
   mutate(
     exp = pmax(0, exp), 
-    var = gsub('^Local \\+ Climate \\+ Spatial$', 'All', var),
+    var = gsub('^Local \\+ Climate \\+ Space$', 'All', var),
     var = factor(
       var, 
-      levels = c('Local', 'Climate', 'Spatial', 'Local + Climate', 'Climate + Spatial', 'Local + Spatial', 'Local + Climate + Spatial', 'Unexplained'), 
-      labels = c('Local', 'Climate', 'Space', 'Local + Climate', 'Climate + Space', 'Local + Space', 'All', 'Unexplained'))
+      levels = c('Local', 'Climate', 'Space', 'Local + Climate', 'Climate + Space', 'Local + Space', 'All', 'Unexplained')
+    )
   ) %>% 
   filter(var != 'Unexplained') %>% 
-  mutate(var = droplevels(var))
+  filter(!spp %in% c('Narrow-leaf Pondweed Group', 'Floating-leaf Water Smartweed Group')) %>% 
+  mutate(
+    var = droplevels(var),
+    spp = droplevels(spp)
+    )
 
 p <- ggplot(toplo, aes(x = spp, y = exp, fill = var)) + 
   geom_bar(stat = 'identity') + 
@@ -140,7 +144,6 @@ p <- ggplot(toplo, aes(x = spp, y = exp, fill = var)) +
 tiff('figs/fig2.tif', height = 4, width = 7, units = 'in', compression = 'lzw', res = 300, family = 'serif')
 print(p)
 dev.off()
-
 
 ##
 # rda biplots of species by local and climate variables

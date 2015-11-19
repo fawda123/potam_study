@@ -58,13 +58,13 @@ spp_var <- do.call('rbind', pot_mod) %>%
     var = factor(
       var, 
       levels = c('loc', 'cli', 'spa', 'loc + cli', 'cli + spa', 'loc + spa', 'loc + cli + spa', 'res'),
-      labels = c('Local', 'Climate', 'Spatial', 'Local + Climate', 'Climate + Spatial', 'Local + Spatial', 'Local + Climate + Spatial', 'Unexplained')
+      labels = c('Local', 'Climate', 'Space', 'Local + Climate', 'Climate + Space', 'Local + Space', 'Local + Climate + Space', 'Unexplained')
     )
   )
 
 # col names formatting
 names(spp_var)[grep('^P', names(spp_var))] <- pot_nms(names(spp_var)[grep('^P', names(spp_var))])
-names(spp_var)[names(spp_var) %in% c('cc_mod', 'rich_mod')] <- c('Assemb. comp', 'Richness')
+names(spp_var)[names(spp_var) %in% c('cc_mod', 'rich_mod')] <- c('Assemb. comp.', 'Richness')
 
 # save
 save(spp_var, file = 'data/spp_var.RData')
