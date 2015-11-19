@@ -238,3 +238,8 @@ totab <- gather(spp_var, 'spp', 'exp', -var) %>%
 names(totab)[names(totab) %in% 'spp'] <- ''
 
 write.csv(totab, 'tabs/tab2.csv', quote = F, row.names = F)
+
+##
+# tab 3 significant variables for individual rda or glm mods used in varpart
+
+
