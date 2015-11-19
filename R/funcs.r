@@ -246,7 +246,7 @@ clim_fun <- function(path, ext_dat, mos = 1:12){
 # resp_in: chr string of variables to model (one to many), uses regexpr matching to select from dat_in
 # 
 # output is numeric vector pure x1, pure x2, pure x3, shared x1/x2, shared x2/x3, shared x1/x3, shared x1/x2/x3, residual, where x1 is loc, x2 is cli, x3 is spa
-pot_var <- function(dat_in, resp_nm){
+pot_var <- function(dat_in, resp_nm, mod_out = FALSE){
   
   library(vegan)
   library(packfor)
@@ -284,39 +284,150 @@ pot_var <- function(dat_in, resp_nm){
     resp_nm <- gsub('\\^|\\$', '', resp_nm)
     
     # local mod
-    modloc <- paste0(resp_nm, ' ~ ', paste(loc_nm, collapse = ' + '))
-    modloc <- glm(as.formula(modloc), family = poisson(link = 'log'), 
+    loc_sel <- paste0(resp_nm, ' ~ ', paste(loc_nm, collapse = ' + '))
+    loc_sel <- glm(as.formula(loc_sel), family = poisson(link = 'log'), 
       data = dat_in, offset = log(tot)) %>% 
       MASS::stepAIC(., direction = 'both', criterion = 'AIC', trace = F)
-    modloc <- formula(modloc)[c(1, 3)]
+    modloc <- formula(loc_sel)[c(1, 3)]
     
     # climate mod
-    modcli <- paste0(resp_nm, ' ~ ', paste(cli_nm, collapse = ' + '))
-    modcli <- glm(as.formula(modcli), family = poisson(link = 'log'), 
+    cli_sel <- paste0(resp_nm, ' ~ ', paste(cli_nm, collapse = ' + '))
+    cli_sel <- glm(as.formula(cli_sel), family = poisson(link = 'log'), 
       data = dat_in, offset = log(tot)) %>% 
       MASS::stepAIC(., direction = 'both', criterion = 'AIC', trace = F)
-    modcli <- formula(modcli)[c(1, 3)]
+    modcli <- formula(cli_sel)[c(1, 3)]
     
     # spatial mod, stepwise, then get formula
     form <- grep(spa_nm, names(dat_in), value = T) %>% 
       paste(., collapse = ' + ') %>% 
       paste0(resp_nm, ' ~ ', .) %>% 
       as.formula
-    modspa <- glm(form, data = dat_in, family = poisson(link = 'log'), offset = log(tot)) %>% 
+    spa_sel <- glm(form, data = dat_in, family = poisson(link = 'log'), offset = log(tot)) %>% 
       MASS::stepAIC(., direction = 'both', criterion = 'AIC', trace = F)
-    modspa <- formula(modspa)[c(1, 3)]
+    modspa <- formula(spa_sel)[c(1, 3)]
     
     # variance partitioning
     mod <- varpart(res[, 1], modloc, modcli, modspa, data = dat_in)
         
   }
 
+  # return individual models if true
+  if(mod_out) return(list(loc = loc_sel, cli = cli_sel, spa = spa_sel))
+  
   # get fractions of variance, 
   # pure x1, pure x2, pure x3, shared x1/x2, shared x2/x3, shared x1/x3, shared x1/x2/x3, residual
   vars <- mod$part$indfract[, 'Adj.R.square']
   names(vars) <- c('loc', 'cli', 'spa', 'loc + cli', 'cli + spa', 'loc + spa', 'loc + cli + spa', 'res')
   return(vars) 
    
+}
+
+######
+# summarize model results for RDA and GLM
+#
+# spp_varmod list of actual models
+pot_summ <- function(spp_varmod){
+  
+  sig_cats <- c('***', '**', '*', 'ns')
+  sig_vals <- c(-Inf, 0.0001, 0.001, 0.05, Inf)
+  
+  # assemb comp is treated different
+  cc_varmod <- spp_varmod[['cc_mod']]
+  spp_varmod <- spp_varmod[!names(spp_varmod) %in% c('cc_mod')]
+  names(spp_varmod)[!names(spp_varmod) %in% 'rich_mod'] <- pot_nms(names(spp_varmod)[!names(spp_varmod) %in% 'rich_mod'])
+  
+  # summarized models by index and chr
+  spp_summ <- function(spp_varmod, ind, chr){
+    
+    summs <- lapply(spp_varmod, function(x){
+      
+      mod <- x[[ind]]
+          
+      if(length(mod$coefficients) == 1) return(NULL)
+       
+      tocat <- summary(mod)$coefficients[-1, , drop = FALSE]     
+      
+      dirs <- rep('+', nrow(tocat))
+      dirs[sign(tocat[, 1]) == -1] <- '-'
+      vars <- row.names(tocat)
+      sigs <- cut(tocat[, 4], breaks = sig_vals, labels = sig_cats)
+      
+      out <- try({data.frame(mod = chr, vars, dirs, sigs)})
+      
+      return(out)
+      
+    })
+    
+    if(chr == 'spa')
+      summs <- lapply(summs, function(x) {
+        if(is.null(x)) return(NULL)
+        else data.frame(mod = chr, vars = 'n', dirs = '', sigs = as.character(nrow(x)))
+      })
+    
+    do.call('rbind', summs)
+    
+  }
+  
+  # create model summaries for each exp var
+  loc_mods <- spp_summ(spp_varmod, 1, 'loc')
+  cli_mods <- spp_summ(spp_varmod, 2, 'cli')
+  spa_mods <- spp_summ(spp_varmod, 3, 'spa')
+  
+  # combine eqach group mod
+  all_mods <- rbind(loc_mods, cli_mods, spa_mods) %>% 
+    mutate(
+      spp = row.names(.),
+      spp = gsub('[0-9]*$', '', spp), 
+      spp = gsub('\\.$', '', spp),
+      spp = gsub('Assemb\\. comp', 'Assemb\\.\\. comp\\.', spp), 
+      spp = gsub('rich_mod', 'Richness', spp)
+      ) 
+  
+  # take care of assemb comp mods
+  cc_mods <- lapply(cc_varmod, function(x) {
+    
+    vars <- x[, 'variables']
+    sigs <- cut(x[, 'pval'], breaks = sig_vals, labels = sig_cats)
+  
+    if(any(grepl('^V[0-9]*$', vars, ignore.case = F))){ 
+      sigs <- as.character(length(sigs))
+      vars <- 'n'
+    }
+  
+    data.frame(vars = vars, dirs = '', sigs = sigs, spp = 'Assemb. comp.')
+    
+  }) %>% 
+  do.call('rbind', .) %>% 
+  data.frame(mod = row.names(.), ., row.names = 1:nrow(.)) %>% 
+  mutate(mod = gsub('\\.[0-9]*$', '', mod))
+    
+  # combine rda and glm mods, make wide format
+  all_mods <- rbind(all_mods, cc_mods) %>% 
+    unite(mod_vars, mod, vars, sep = ' ') %>% 
+    unite(ests, dirs, sigs, sep = ' ') %>% 
+    spread(mod_vars, ests) %>% 
+    mutate(spp = gsub('^rich_mod$', 'Richness', spp))
+  
+  # add exp var for each category
+  cc_exp <- lapply(cc_varmod, function(x) max(x[, 'AdjR2Cum']) * 100)
+  sp_exp <- lapply(spp_varmod, function(spp){
+    out <- lapply(spp , function(mod) 100 * Dsquared(mod, adjust = TRUE))
+    unlist(out)
+    }) %>% 
+    do.call('rbind', .)
+  all_exp <- rbind(cc_exp, sp_exp) %>% 
+    data.frame %>% 
+    mutate(spp = row.names(.)) %>% 
+    data.frame(., row.names = c(1:nrow(.))) %>% 
+    mutate(
+      spp = gsub('cc_exp', 'Assemb\\. comp\\.', spp),
+      spp = gsub('rich_mod', 'Richness', spp)
+      )
+  
+  out <- left_join(all_mods, all_exp, by = 'spp')
+  
+  return(out)
+  
 }
 
 ######

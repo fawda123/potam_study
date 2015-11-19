@@ -226,13 +226,14 @@ load(file = 'data/spp_var.RData')
 # long format and minor name formatting
 totab <- gather(spp_var, 'spp', 'exp', -var) %>% 
   mutate(
-    spp = gsub('\\.', ' ', spp),
-    spp = gsub('^P  ', 'P\\. ', spp),
-    spp = gsub('^Assemb\\.\\.', 'Assemb\\.', spp), 
-    spp = factor(spp, levels = unique(spp)),
-    var = gsub('^All three groups', 'All', var), 
-    var = factor(var, levels = unique(var))
+    var = gsub('^Local \\+ Climate \\+ Space$', 'All', var),
+    var = factor(
+      var, 
+      levels = c('Local', 'Climate', 'Space', 'Local + Climate', 'Climate + Space', 'Local + Space', 'All', 'Unexplained')
+    ), 
+    exp = 100 * exp
   ) %>% 
+  filter(!spp %in% c('Narrow-leaf Pondweed Group', 'Floating-leaf Water Smartweed Group')) %>% 
   spread(var, exp)
 
 names(totab)[names(totab) %in% 'spp'] <- ''
@@ -242,4 +243,8 @@ write.csv(totab, 'tabs/tab2.csv', quote = F, row.names = F)
 ##
 # tab 3 significant variables for individual rda or glm mods used in varpart
 
+data(spp_varmod)
 
+totab <- pot_summ(spp_varmod)
+
+write.csv(totab, 'tabs/tab3.csv', quote = F, row.names = F)

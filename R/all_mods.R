@@ -68,3 +68,37 @@ names(spp_var)[names(spp_var) %in% c('cc_mod', 'rich_mod')] <- c('Assemb. comp.'
 
 # save
 save(spp_var, file = 'data/spp_var.RData')
+
+######
+# get actual models, only single category models (e.g., local, climate, or spatial)
+
+##
+# community composition model
+cc_mod <- pot_var(all_potam, '^P', mod_out = TRUE)
+
+## 
+# richness model
+rich_mod <- pot_var(all_potam, '^S$', mod_out = TRUE)
+
+##
+# individual species mods, repeated for each species
+
+pot_nms <- grep('^P', names(all_potam), ignore.case = F, value = T)
+
+pot_mod <- list()
+for(pot in pot_nms){
+ 
+  cat(pot, '\t') 
+  tmp_mod <- try({pot_var(all_potam, paste0('^', pot, '$'), mod_out = TRUE)})
+  
+  # go to next variable if error
+  if(inherits(tmp_mod, 'try-error')) next
+  
+  # append results
+  pot_mod[[pot]] <- tmp_mod
+  
+}
+
+# combine all into list, save
+spp_varmod <- c(cc_mod = list(cc_mod), rich_mod = list(rich_mod), pot_mod)
+save(spp_varmod, file = 'data/spp_varmod.RData')
