@@ -247,4 +247,4 @@ data(spp_varmod)
 
 totab <- pot_summ(spp_varmod)
 
-write.csv(totab, 'tabs/tab3.csv', quote = F, row.names = F)
+write.csv(totab, 'tabs/tab3.csv', row.names = F, quote = F)

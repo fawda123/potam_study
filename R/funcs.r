@@ -352,7 +352,7 @@ pot_summ <- function(spp_varmod){
       vars <- row.names(tocat)
       sigs <- cut(tocat[, 4], breaks = sig_vals, labels = sig_cats)
       
-      out <- try({data.frame(mod = chr, vars, dirs, sigs)})
+      out <- try({data.frame(mod = chr, vars, sigs, dirs)})
       
       return(out)
       
@@ -361,7 +361,7 @@ pot_summ <- function(spp_varmod){
     if(chr == 'spa')
       summs <- lapply(summs, function(x) {
         if(is.null(x)) return(NULL)
-        else data.frame(mod = chr, vars = 'n', dirs = '', sigs = as.character(nrow(x)))
+        else data.frame(mod = chr, vars = 'n', sigs = as.character(nrow(x)), dirs = '')
       })
     
     do.call('rbind', summs)
@@ -394,7 +394,7 @@ pot_summ <- function(spp_varmod){
       vars <- 'n'
     }
   
-    data.frame(vars = vars, dirs = '', sigs = sigs, spp = 'Assemb. comp.')
+    data.frame(vars = vars, sigs = sigs, dirs = '', spp = 'Assemb. comp.')
     
   }) %>% 
   do.call('rbind', .) %>% 
@@ -404,17 +404,19 @@ pot_summ <- function(spp_varmod){
   # combine rda and glm mods, make wide format
   all_mods <- rbind(all_mods, cc_mods) %>% 
     unite(mod_vars, mod, vars, sep = ' ') %>% 
-    unite(ests, dirs, sigs, sep = ' ') %>% 
-    spread(mod_vars, ests) %>% 
+    unite(ests, sigs, dirs, sep = '') %>% 
+    spread(mod_vars, ests, fill = '') %>% 
     mutate(spp = gsub('^rich_mod$', 'Richness', spp))
   
   # add exp var for each category
-  cc_exp <- lapply(cc_varmod, function(x) max(x[, 'AdjR2Cum']) * 100)
+  cc_exp <- lapply(cc_varmod, function(x) max(x[, 'AdjR2Cum']) * 100) %>% 
+    as.data.frame(., row.names = c('Assemb. comp.'))
   sp_exp <- lapply(spp_varmod, function(spp){
     out <- lapply(spp , function(mod) 100 * Dsquared(mod, adjust = TRUE))
     unlist(out)
     }) %>% 
-    do.call('rbind', .)
+    do.call('rbind', .) %>% 
+    as.data.frame
   all_exp <- rbind(cc_exp, sp_exp) %>% 
     data.frame %>% 
     mutate(spp = row.names(.)) %>% 
@@ -424,8 +426,28 @@ pot_summ <- function(spp_varmod){
       spp = gsub('rich_mod', 'Richness', spp)
       )
   
-  out <- left_join(all_mods, all_exp, by = 'spp')
+  # join by spp, remove generic species
+  out <- left_join(all_mods, all_exp, by = 'spp') %>% 
+    filter(!spp %in% c('Narrow-leaf Pondweed Group', 'Floating-leaf Water Smartweed Group')) 
   
+  # sort rows by assemb comp, rich, then spp
+  spp <- grep('^P\\.', out$spp, value = T)
+  out$spp <- factor(out$spp, levels = c('Assemb. comp.', 'Richness', spp))
+  out <- out[order(out$spp), ]
+  out$spp <- as.character(out$spp)
+  
+  # create column labels and sublabels
+  cats <- gsub('[[:space:]][a-z]*$', '', names(out))
+  names(cats) <- names(out)
+  vars <- gsub('loc|cli|spa|[[:space:]]', '', names(out))
+  vars[nchar(vars) == 0] <- '%'
+  names(vars) <- names(out)
+  
+  # sort columns by column labels and sublabels
+  col_ord <- order(cats[-1], names(out)[-1])
+
+  out <- rbind(cats, vars, out)[, c(1, 1 + col_ord)]
+    
   return(out)
   
 }
