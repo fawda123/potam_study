@@ -178,7 +178,9 @@ points(Latitude ~ Longitude, data = all_potam)
 
 ## Qs
 
-* show figs/tabs
-* negative explained variance, floor at zero?
-* variable selection for pcnm axes?
-* species richness was estimated as sum of counts for each survey (not really richness)? tot is number of total points in the survey?
+* which pcnm axes are most important - get counts for each model, then plot spatially on map with scores, also RDA biplot (pay attention to P. crispus)
+* separate barplots by explanatory variable categories (local, etc.), order species from high to low
+* figure 1, fewer categories for species richness
+* what journal, color figs?
+* cumulative counts of species by lakes?
+* sort pot_spp_bla function to deal with species that do not include categories of variables

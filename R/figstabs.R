@@ -185,6 +185,28 @@ text(mod_cli, dis = 'cn', axis.bp = FALSE)
 text(mod_cli, "species", col="blue", cex=0.8)
 dev.off()
 
+# ##
+# #  cumulative species plot by lakes
+# library(dplyr)
+# 
+# data(all_potam)
+# 
+# toplo <- select(all_potam, matches('^P', ignore.case = FALSE)) %>% 
+#   apply(., 2, pmin, 1) %>% 
+#   .[, colSums(.) > 5] %>% 
+#   apply(., 2, function(x) cumsum(x)/(max(cumsum(x)))) %>% 
+#   as.data.frame %>% 
+#   mutate(lakes = 1:nrow(.)) %>% 
+#   gather('spp', 'cumsum', -lakes) %>% 
+#   mutate(spp = pot_nms(spp)) %>% 
+#   filter(spp != 'Narrow-leaf Pondweed Group')
+# 
+# ggplot(toplo, aes(x = lakes, y = cumsum, colour = spp)) +
+#   geom_line(size = 1) + 
+#   # geom_point() + 
+#   theme_bw()
+
+
 ######
 # tables
 
