@@ -322,6 +322,66 @@ pot_var <- function(dat_in, resp_nm, mod_out = FALSE){
    
 }
 
+# forward variable selection of rda using blanchet
+bla_sel <- function(resp, exp){
+  
+  library(packfor)
+
+  mod <- rda(resp, exp)
+  mod_R2a <- RsquareAdj(mod)$adj.r.squared
+  modfwd <- forward.sel(resp, as.matrix(exp), adjR2thresh = mod_R2a, nperm = 999)
+  
+  # Write the significant variables to a new object
+  exp_sign <- sort(modfwd$order)
+  vars_ho <- exp[, c(exp_sign), drop = F]
+  
+  colnames(vars_ho)
+  
+}
+
+######
+# same function as above but variable selection for individual mods (loc, sli, spa) uses blanchet variable selection
+pot_var_bla <- function(dat_in, resp_nm, mod_out = FALSE){
+  
+  library(vegan)
+  library(packfor)
+  library(dplyr)
+  
+  # names of variables to select
+  loc_nm <- c('alk','color', 'tp', 'secchi', 'area', 'depth')
+  cli_nm <- c('tmean', 'tmax', 'tmin', 'prec', 'alt')
+  spa_nm <- '^V'
+  
+  # subset dat_in by explanatory variable sets
+  loc <- select(dat_in, matches(paste(loc_nm, collapse = '|')))
+  cli <- select(dat_in, matches(paste(cli_nm, collapse = '|')))
+  spa <- select(dat_in, matches(spa_nm, ignore.case = F))
+  
+  # subset dat_in by response variable(s)
+  res <- select(dat_in, matches(resp_nm, ignore.case = F))
+
+  # otherwise, glm
+  loc_sel <- bla_sel(res, loc)
+  loc <- loc[, loc_sel, drop = FALSE]
+  cli_sel <- bla_sel(res, cli)
+  cli <- cli[, cli_sel, drop = FALSE]
+  spa_sel <- bla_sel(res, spa)
+  spa <- spa[, spa_sel, drop = FALSE]
+
+  if(ncol(res) > 1){
+    mod <- varpart(Y = res, X = loc, cli, spa, transfo = 'hel')
+  } else {
+    mod <- varpart(Y = res, X = loc, cli, spa)
+  }
+
+  # get fractions of variance, 
+  # pure x1, pure x2, pure x3, shared x1/x2, shared x2/x3, shared x1/x3, shared x1/x2/x3, residual
+  vars <- mod$part$indfract[, 'Adj.R.square']
+  names(vars) <- c('loc', 'cli', 'spa', 'loc + cli', 'cli + spa', 'loc + spa', 'loc + cli + spa', 'res')
+  return(vars) 
+   
+}
+
 ######
 # summarize model results for RDA and GLM
 #

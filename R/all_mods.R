@@ -16,11 +16,11 @@ all_potam <- select(all_potam, matches('^P', ignore.case = F)) %>%
 
 ##
 # community composition model
-cc_mod <- pot_var(all_potam, '^P')
+cc_mod <- pot_var_bla(all_potam, '^P')
 
 ## 
 # richness model
-rich_mod <- pot_var(all_potam, '^S$')
+rich_mod <- pot_var_bla(all_potam, '^S$')
 
 ##
 # individual species mods, repeated for each species
@@ -32,7 +32,7 @@ names(pot_mod) <- pot_nms
 for(pot in pot_nms){
  
   cat(pot, '\t') 
-  tmp_mod <- try({pot_var(all_potam, paste0('^', pot, '$'))})
+  tmp_mod <- try({pot_var_bla(all_potam, paste0('^', pot, '$'))})
   
   # go to next variable if error
   if(inherits(tmp_mod, 'try-error')) next
@@ -74,7 +74,7 @@ save(spp_var, file = 'data/spp_var.RData')
 
 ##
 # community composition model
-cc_mod <- pot_var(all_potam, '^P', mod_out = TRUE)
+cc_mod <- pot_var_bla(all_potam, '^P', mod_out = TRUE)
 
 ## 
 # richness model
