@@ -107,6 +107,7 @@ dev.off()
 
 ##
 # barplot of var part by species
+# separte barplots by pure, shared, and total 
 
 load(file = 'data/spp_var.RData')
 
@@ -117,14 +118,11 @@ toplo <- gather(spp_var, 'spp', 'exp', -var) %>%
     var = gsub('^Local \\+ Climate \\+ Space$', 'All', var),
     var = factor(
       var, 
-      levels = c('Local', 'Climate', 'Space', 'Local + Climate', 'Climate + Space', 'Local + Space', 'All', 'Unexplained')
+      levels = c('Local', 'Climate', 'Space', 'Local + Climate', 'Climate + Space', 'Local + Space', 'All', 'Unexplained', 'Total')
     )
   ) %>% 
   filter(var != 'Unexplained') %>% 
   filter(!spp %in% c('Narrow-leaf Pondweed Group', 'Floating-leaf Water Smartweed Group')) %>% 
-  group_by(spp) %>% 
-  mutate(Total = sum(exp)) %>% 
-  ungroup %>% 
   mutate(
     var = droplevels(var),
     spp = droplevels(spp),
@@ -133,22 +131,82 @@ toplo <- gather(spp_var, 'spp', 'exp', -var) %>%
   data.frame
 levels(toplo$var_comb) <- c('Pure', 'Pure', 'Pure', 'Shared', 'Shared', 'Shared', 'Shared', 'Total')
 
-p <- ggplot(toplo, aes(x = spp, y = exp, fill = var)) + 
-  geom_bar(stat = 'identity') + 
+# color vectors
+cols <- paste0('grey', c('90', '70', '50', '60', '20', '40', '10'))
+
+# y limits
+ylims <- c(0, 0.45)
+
+# plot margins
+margs <- grid::unit(c(0.1,0.1,0.1,0.1), "cm")
+
+# bar width
+bwid <- 0.8 
+
+# total explained variance
+toplo1 <- filter(toplo, var_comb == 'Total')
+
+# get rank of total explained variance for each spp, keep assemb comp and richness first
+levs <- c(1, 2, rev(2 + order(toplo1$exp[-c(1,2)])))
+toplo1$spp <- factor(toplo1$spp, levels = levels(toplo1$spp)[levs])
+p1 <- ggplot(toplo1, aes(x = spp, y = exp)) + 
+  geom_bar(stat = 'identity', fill = NA, colour = 'black', width = bwid) + 
+  theme_bw() +
+  theme(
+    legend.title = element_blank(),
+    axis.title.x = element_blank(), 
+    axis.text.x = element_blank(), # element_text(angle = 90, hjust = 1, vjust = 0), 
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    plot.margin = margs
+    ) + 
+  facet_wrap(~var_comb) + 
+  geom_vline(xintercept = 2.5, size = 1) + 
+  scale_y_continuous('% explained', limits = ylims)
+  
+# pure effects
+toplo2 <- filter(toplo, var_comb == 'Pure')
+toplo2$spp <- factor(toplo2$spp, levels = levels(toplo2$spp)[levs]) # sort levels by order
+p2 <- ggplot(toplo2, aes(x = spp, y = exp, fill = var, order = -as.numeric(var))) + 
+  geom_bar(stat = 'identity', width = bwid) + 
+  theme_bw() +
+  theme(
+    legend.title = element_blank(),
+    axis.title.x = element_blank(), 
+    axis.text.x = element_blank(), #element_text(angle = 90, hjust = 1, vjust = 0), 
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    legend.position = c(1, 1), legend.justification = c(1, 1),
+    plot.margin = margs
+    ) + 
+  facet_wrap(~var_comb) + 
+  geom_vline(xintercept = 2.5, size = 1) + 
+  scale_fill_manual(values = cols[1:3]) + 
+  scale_y_continuous('% explained', limits = ylims)
+
+# shared effects  
+toplo3 <- filter(toplo, var_comb == 'Shared')
+toplo3$spp <- factor(toplo3$spp, levels = levels(toplo3$spp)[levs])
+p3 <- ggplot(toplo3, aes(x = spp, y = exp, fill = var, order = -as.numeric(var))) + 
+  geom_bar(stat = 'identity', width = bwid) + 
   theme_bw() +
   theme(
     legend.title = element_blank(),
     axis.title.x = element_blank(), 
     axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0), 
     panel.grid.major = element_blank(), 
-    panel.grid.minor = element_blank()
+    panel.grid.minor = element_blank(), 
+    legend.position = c(1, 1), legend.justification = c(1, 1),
+    plot.margin = margs
     ) + 
-  scale_fill_manual(values = RColorBrewer::brewer.pal(length(unique(toplo$var)), 'Spectral')) + 
-  scale_y_continuous('% explained')
-  
+  facet_wrap(~var_comb) + 
+  geom_vline(xintercept = 2.5, size = 1) + 
+  scale_fill_manual(values = cols[4:7]) + 
+  scale_y_continuous('% explained', limits = ylims)
+
 # save
-tiff('figs/fig2.tif', height = 4, width = 7, units = 'in', compression = 'lzw', res = 300, family = 'serif')
-print(p)
+tiff('figs/fig2.tif', height = 8, width = 6, units = 'in', compression = 'lzw', res = 300, family = 'serif')
+grid.arrange(p1, p2, p3, ncol = 1, heights = c(0.75, 0.75, 1))
 dev.off()
 
 ##
