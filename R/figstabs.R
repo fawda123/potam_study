@@ -45,11 +45,11 @@ ecoregs$Ecoregion <- factor(ecoregs$id, levels = c(0:8),
 # get richness from potams
 toplo <- data.frame(potams) %>% 
   mutate(Richnum = rowSums(.[, grepl('^P', names(.), ignore.case = F)] > 0)) %>% 
-  mutate(Richcat = cut(Richnum, breaks = c(-Inf, 1, 3, 6, 9, 12, Inf), 
-    labels = c('1', '<3', '<6', '<9', '<12', '>12'))
+  mutate(Richcat = cut(Richnum, breaks = c(-Inf, 1, 3, 6, 9, Inf), 
+    labels = c('1', '<3', '<6', '<9', '>9'))
     ) %>% 
   data.frame
-labs <- list(expression(1), expression(phantom('')<=3), expression(phantom('')<=6), expression(phantom('')<=9), expression(phantom('')<=12), expression(phantom('')>12))
+labs <- list(expression(1), expression(phantom('')<=3), expression(phantom('')<=6), expression(phantom('')<=9), expression(phantom('')>9))
 
 # MN and WI maps
 p1 <- ggplot(mncounties, aes(x = long, y = lat)) + 
@@ -63,7 +63,7 @@ p1 <- ggplot(mncounties, aes(x = long, y = lat)) +
     alpha = 0.5) +
   geom_point(data = toplo, aes(x = Longitude, y = Latitude, 
     size = Richcat, colour = Richcat), alpha = 0.8) +
-  scale_size_discrete('Richness', range = c(5, 13), labels = labs) + 
+  scale_size_discrete('Richness', range = c(2, 8), labels = labs) + 
   scale_colour_manual('Richness', values = brewer.pal(9, 'Reds')[3:8], labels = labs) +
   theme_classic() + 
   theme(axis.line=element_blank(),axis.text.x=element_blank(),
@@ -122,10 +122,16 @@ toplo <- gather(spp_var, 'spp', 'exp', -var) %>%
   ) %>% 
   filter(var != 'Unexplained') %>% 
   filter(!spp %in% c('Narrow-leaf Pondweed Group', 'Floating-leaf Water Smartweed Group')) %>% 
+  group_by(spp) %>% 
+  mutate(Total = sum(exp)) %>% 
+  ungroup %>% 
   mutate(
     var = droplevels(var),
-    spp = droplevels(spp)
-    )
+    spp = droplevels(spp),
+    var_comb = factor(var)
+  ) %>% 
+  data.frame
+levels(toplo$var_comb) <- c('Pure', 'Pure', 'Pure', 'Shared', 'Shared', 'Shared', 'Shared', 'Total')
 
 p <- ggplot(toplo, aes(x = spp, y = exp, fill = var)) + 
   geom_bar(stat = 'identity') + 

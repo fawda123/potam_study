@@ -377,7 +377,11 @@ pot_var_bla <- function(dat_in, resp_nm, mod_out = FALSE){
   # get fractions of variance, 
   # pure x1, pure x2, pure x3, shared x1/x2, shared x2/x3, shared x1/x3, shared x1/x2/x3, residual
   vars <- mod$part$indfract[, 'Adj.R.square']
-  names(vars) <- c('loc', 'cli', 'spa', 'loc + cli', 'cli + spa', 'loc + spa', 'loc + cli + spa', 'res')
+  
+  # add total as extra, 1 - residual
+  vars <- c(vars, 1 - vars[length(vars)])
+  
+  names(vars) <- c('loc', 'cli', 'spa', 'loc + cli', 'cli + spa', 'loc + spa', 'loc + cli + spa', 'res', 'tot')
   return(vars) 
    
 }

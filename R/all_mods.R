@@ -57,8 +57,8 @@ spp_var <- do.call('rbind', pot_mod) %>%
   mutate(
     var = factor(
       var, 
-      levels = c('loc', 'cli', 'spa', 'loc + cli', 'cli + spa', 'loc + spa', 'loc + cli + spa', 'res'),
-      labels = c('Local', 'Climate', 'Space', 'Local + Climate', 'Climate + Space', 'Local + Space', 'Local + Climate + Space', 'Unexplained')
+      levels = c('loc', 'cli', 'spa', 'loc + cli', 'cli + spa', 'loc + spa', 'loc + cli + spa', 'res', 'tot'),
+      labels = c('Local', 'Climate', 'Space', 'Local + Climate', 'Climate + Space', 'Local + Space', 'Local + Climate + Space', 'Unexplained', 'Total')
     )
   )
 
