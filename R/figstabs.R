@@ -66,7 +66,7 @@ p1 <- ggplot(mncounties, aes(x = long, y = lat)) +
   geom_polygon(data = ecoregs, aes(x = long, y = lat, group = group, fill= Ecoregion),  
     alpha = 0.5) +
   geom_point(data = toplo, aes(x = Longitude, y = Latitude, 
-    size = Richcat, colour = Richcat), alpha = 0.8) +
+    size = Richcat, colour = Richcat), alpha = 0.65) +
   scale_size_discrete('Richness', range = c(2, 8), labels = labs) + 
   scale_colour_manual('Richness', values = rep('black', 5), labels = labs) +
   scale_fill_manual(values = brewer.pal(9, 'Greys')[c(3, 5, 7, 9)]) +
@@ -240,18 +240,33 @@ mod_loc <- rda(spp, loc)
 mod_cli <- rda(spp, cli)
 
 # biplots
+
+# local
 tiff('figs/fig3.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
 par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
 
-plot(mod_loc, type = 'n', xlim = c(-1, 1))
-points(mod_loc, pch=21, col=scales::alpha("red", 0.4), bg=scales::alpha("green", 0.4), cex=0.8)
+plot(mod_loc, type = 'n', xlim = c(-1, 1), xlab = '')
+points(mod_loc, pch=21, col=scales::alpha("black", 0.4), bg=scales::alpha("grey", 0.4), cex=0.8)
 text(mod_loc, dis = 'cn',  axis.bp = FALSE)
-text(mod_loc, "species", col="blue", cex=0.8)
+
+plot(mod_loc, type = 'n', xlim = c(-1, 1))
+points(mod_loc, pch=21, col=scales::alpha("black", 0.4), bg=scales::alpha("grey", 0.4), cex=0.8)
+text(mod_loc, "species", col="black", cex=1)
+
+dev.off()
+
+# climate
+tiff('figs/fig4.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
+
+plot(mod_cli, type = 'n', xlim = c(-1, 1), xlab = '')
+points(mod_cli, pch=21, col=scales::alpha("black", 0.4), bg=scales::alpha("grey", 0.4), cex=0.8)
+text(mod_cli, dis = 'cn', axis.bp = FALSE)
 
 plot(mod_cli, type = 'n', xlim = c(-1, 1))
-points(mod_cli, pch=21, col=scales::alpha("red", 0.4), bg=scales::alpha("green", 0.4), cex=0.8)
-text(mod_cli, dis = 'cn', axis.bp = FALSE)
-text(mod_cli, "species", col="blue", cex=0.8)
+points(mod_cli, pch=21, col=scales::alpha("black", 0.4), bg=scales::alpha("grey", 0.4), cex=0.8)
+text(mod_cli, "species", col="black", cex=1)
+
 dev.off()
 
 # ##
