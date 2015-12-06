@@ -290,6 +290,97 @@ dev.off()
 #   # geom_point() + 
 #   theme_bw()
 
+##
+# important pcnm axes by mods
+
+library(dplyr)
+
+# get legend from an existing ggplot object
+g_legend <- function(a.gplot){
+  tmp <- ggplot_gtable(ggplot_build(a.gplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)}
+
+# spatial data
+ecoregs <- readShapeSpatial('M:/GIS/mnwi_eco3utm.shp')
+mnstate <- readShapeSpatial('M:/GIS/MN/state.shp')
+wistate <- readShapeSpatial('M:/GIS/WI/WI.shp')
+mncounties <- readShapeSpatial('M:/GIS/MN/bdry_counpy2.shp')
+wicounties <- readShapeSpatial('M:/GIS/WI/WI_counties.shp')
+potams <- readShapeSpatial('M:/GIS/all_potam.shp') %>% 
+  data.frame
+
+# make ggplot format
+mnstate <- fortify(mnstate)
+wistate <- fortify(wistate)
+ecoregs <- fortify(ecoregs)
+mncounties <- fortify(mncounties)
+wicounties <- fortify(wicounties)
+ecoregs$Ecoregion <- factor(ecoregs$id, levels = c(0:8),
+  labels = c('CCBP', 'DA', 'LAP', 'NCHF', 'NGP', 'NLF', 'NMW','SWTP', 'WCBP'))
+
+# subset ecoregs
+ecoregs <- ecoregs[!ecoregs$Ecoregion %in% c('DA', 'CCBP', 'LAP', 'NMW', 'SWTP'), ]
+ecoregs$Ecoregion <- droplevels(ecoregs$Ecoregion)
+
+# MN and WI maps
+pbase <- ggplot(mncounties, aes(x = long, y = lat)) + 
+  geom_polygon(aes(group = group), fill = NA, colour = 'grey') +
+  geom_polygon(data = wicounties, aes(group = group), 
+    fill = NA, colour = 'grey') +
+  geom_polygon(data = wistate, aes(x = long, y = lat, group = group), fill = NA, 
+    colour = 'black') +
+  geom_polygon(data = mnstate, aes(x = long, y = lat), fill = NA, colour = 'black') + 
+  geom_polygon(data = ecoregs, aes(x = long, y = lat, group = group, fill= Ecoregion),  
+    alpha = 0.5) +
+  scale_fill_manual(values = brewer.pal(9, 'Greys')[c(3, 5, 7, 9)]) +
+  theme_classic() + 
+  theme(legend.position = 'none', 
+    axis.line=element_blank(),axis.text.x=element_blank(),
+    axis.text.y=element_blank(),axis.ticks=element_blank(),
+    axis.title.x=element_blank(),
+    axis.title.y=element_blank(),
+    panel.background=element_blank(),panel.border=element_blank(),
+    panel.grid.major=element_blank(),
+    panel.grid.minor=element_blank(),plot.background=element_blank(), 
+    plot.margin = grid::unit(c(-0.1, -0.1, -0.1, -0.1), 'in')
+    ) +
+  coord_equal()
+
+# add spatial vars, 1 through 8 princomp
+
+alph <- 0.65
+rng <- c(1, 8)
+
+p1 <- pbase + 
+  geom_point(data = potams, aes(x = Longitude, y = Latitude, size = V1), alpha = alph) + 
+  scale_size_continuous(range = rng)
+
+p2 <- pbase + 
+  geom_point(data = potams, aes(x = Longitude, y = Latitude, size = V2), alpha = alph) + 
+  scale_size_continuous(range = rng)
+
+p3 <- pbase + 
+  geom_point(data = potams, aes(x = Longitude, y = Latitude, size = V3), alpha = alph) + 
+  scale_size_continuous(range = rng)
+
+p4 <- pbase + 
+  geom_point(data = potams, aes(x = Longitude, y = Latitude, size = V4), alpha = alph) + 
+  scale_size_continuous(range = rng)
+
+p5 <- pbase + 
+  geom_point(data = potams, aes(x = Longitude, y = Latitude, size = V5), alpha = alph) + 
+  scale_size_continuous(range = rng)
+
+p6 <- pbase + 
+  geom_point(data = potams, aes(x = Longitude, y = Latitude, size = V6), alpha = alph) + 
+  scale_size_continuous(range = rng)
+
+grid.arrange(p1, p2, p3, p4, p5, p6, ncol = 3)
+
+# iteratively go through each model to get which pcnm axes were important 
+
 
 ######
 # tables
