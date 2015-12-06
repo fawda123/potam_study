@@ -42,6 +42,10 @@ wicounties <- fortify(wicounties)
 ecoregs$Ecoregion <- factor(ecoregs$id, levels = c(0:8),
   labels = c('CCBP', 'DA', 'LAP', 'NCHF', 'NGP', 'NLF', 'NMW','SWTP', 'WCBP'))
 
+# subset ecoregs
+ecoregs <- ecoregs[!ecoregs$Ecoregion %in% c('DA', 'CCBP', 'LAP', 'NMW', 'SWTP'), ]
+ecoregs$Ecoregion <- droplevels(ecoregs$Ecoregion)
+
 # get richness from potams
 toplo <- data.frame(potams) %>% 
   mutate(Richnum = rowSums(.[, grepl('^P', names(.), ignore.case = F)] > 0)) %>% 
@@ -64,7 +68,8 @@ p1 <- ggplot(mncounties, aes(x = long, y = lat)) +
   geom_point(data = toplo, aes(x = Longitude, y = Latitude, 
     size = Richcat, colour = Richcat), alpha = 0.8) +
   scale_size_discrete('Richness', range = c(2, 8), labels = labs) + 
-  scale_colour_manual('Richness', values = brewer.pal(9, 'Reds')[3:8], labels = labs) +
+  scale_colour_manual('Richness', values = rep('black', 5), labels = labs) +
+  scale_fill_manual(values = brewer.pal(9, 'Greys')[c(3, 5, 7, 9)]) +
   theme_classic() + 
   theme(axis.line=element_blank(),axis.text.x=element_blank(),
           axis.text.y=element_blank(),axis.ticks=element_blank(),
@@ -81,9 +86,9 @@ p1 <- ggplot(mncounties, aes(x = long, y = lat)) +
 pinset <- ggplot(country, aes(x = long, y = lat, group = group)) + 
   geom_polygon(fill = NA, colour = 'grey') +
   geom_polygon(data = mnstate, aes(x = long, y = lat, group = group), 
-    fill = 'tomato1') + 
+    fill = 'black') + 
   geom_polygon(data = wistate, aes(x = long, y = lat, group = group), 
-    fill = 'tomato1') +
+    fill = 'black') +
   theme_classic() + 
   theme(axis.line=element_blank(),axis.text.x=element_blank(),
     axis.text.y=element_blank(),axis.ticks=element_blank(),
