@@ -518,12 +518,13 @@ totab <- gather(spp_var, 'spp', 'exp', -var) %>%
     var = gsub('^Local \\+ Climate \\+ Space$', 'All', var),
     var = factor(
       var, 
-      levels = c('Local', 'Climate', 'Space', 'Local + Climate', 'Climate + Space', 'Local + Space', 'All', 'Unexplained')
+      levels = c('Local', 'Climate', 'Space', 'Local + Climate', 'Climate + Space', 'Local + Space', 'All', 'Unexplained', 'Total')
     ), 
     exp = 100 * exp
   ) %>% 
   filter(!spp %in% c('Narrow-leaf Pondweed Group', 'Floating-leaf Water Smartweed Group')) %>% 
-  spread(var, exp)
+  spread(var, exp) %>% 
+  select(-Unexplained)
 
 names(totab)[names(totab) %in% 'spp'] <- ''
 
