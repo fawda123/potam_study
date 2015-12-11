@@ -539,6 +539,7 @@ pot_nms <- function(chr_in, to_spp = TRUE, abb_spp = TRUE){
   # species to codes    
   } else {
     
+    chr_in <- gsub('^P\\.', 'Potamogeton', chr_in)
     out <- pot_sp[match(chr_in, pot_comm)]
     
   }

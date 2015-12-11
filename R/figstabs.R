@@ -235,9 +235,50 @@ loc <- select(all_potam, matches(paste(loc_nm, collapse = '|')))
 cli <- select(all_potam, matches(paste(cli_nm, collapse = '|')))
 spa <- select(all_potam, matches(spa_nm, ignore.case = F))
 
+# iteratively go through each model to get which pcnm axes were important 
+# which axes were chosen for which species
+spa_axs <- lapply(
+  spp_varmod, 
+  function(x){
+
+    spamod <- x$spa
+    
+    if(inherits(spamod, 'data.frame')) return(spamod$variables)
+    
+    out <- names(spamod$coefficients)
+    out <- out[!grepl('Intercept', out)]
+    
+    return(out)
+  
+  })
+
+# get potamogeton species with working var part mods
+tosel <- as.character(na.omit(pot_nms(names(spp_var), to_spp = F)))
+spa_axs <- spa_axs[names(spa_axs) %in% c('cc_mod', 'rich_mod', tosel)] %>% 
+  reshape2::melt(.)
+spa_axs <- table(spa_axs$value) %>% 
+  data.frame %>% 
+  mutate(Var1 = factor(Var1)) %>% 
+  mutate(Var1 = factor(Var1, levels = levels(Var1)[order(Freq)]))
+
+# ggplot(spa_axs, aes(x = Var1, y = Freq)) + 
+#   geom_bar(stat = 'identity')  
+
+# get top ranked PCNM axes by count, axis label ascending
+spa_axs <- spa_axs[rev(order(spa_axs$Var1)), ] %>% 
+  .[1:10, ] %>% 
+  dplyr::select(Var1) %>% 
+  mutate(Var1 = gsub('V', '', Var1)) %>% 
+  .$Var1 %>% 
+  as.numeric %>% 
+  sort %>% 
+  .[1:10] %>% 
+  paste0('V', .)
+
 # rda mods
 mod_loc <- rda(spp, loc)
 mod_cli <- rda(spp, cli)
+mod_spa <- rda(spp, spa[, spa_axs])
 
 # biplots
 
@@ -269,31 +310,29 @@ text(mod_cli, "species", col="black", cex=1)
 
 dev.off()
 
+# spatial
+tiff('figs/fig5.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
+
+plot(mod_spa, type = 'n', xlim = c(-1, 1), xlab = '')
+points(mod_spa, pch=21, col=scales::alpha("black", 0.4), bg=scales::alpha("grey", 0.4), cex=0.8)
+text(mod_spa, dis = 'cn', axis.bp = FALSE)
+
+plot(mod_spa, type = 'n', xlim = c(-1, 1))
+points(mod_spa, pch=21, col=scales::alpha("black", 0.4), bg=scales::alpha("grey", 0.4), cex=0.8)
+text(mod_spa, "species", col="black", cex=1)
+
+dev.off()
+
 # ##
-# #  cumulative species plot by lakes
-# library(dplyr)
-# 
-# data(all_potam)
-# 
-# toplo <- select(all_potam, matches('^P', ignore.case = FALSE)) %>% 
-#   apply(., 2, pmin, 1) %>% 
-#   .[, colSums(.) > 5] %>% 
-#   apply(., 2, function(x) cumsum(x)/(max(cumsum(x)))) %>% 
-#   as.data.frame %>% 
-#   mutate(lakes = 1:nrow(.)) %>% 
-#   gather('spp', 'cumsum', -lakes) %>% 
-#   mutate(spp = pot_nms(spp)) %>% 
-#   filter(spp != 'Narrow-leaf Pondweed Group')
-# 
-# ggplot(toplo, aes(x = lakes, y = cumsum, colour = spp)) +
-#   geom_line(size = 1) + 
-#   # geom_point() + 
-#   theme_bw()
 
 ##
 # important pcnm axes by mods
 
-library(dplyr)
+data(spp_varmod)
+data(spp_var)
+data(all_potam)
+data(potam_PCNM)
 
 # get legend from an existing ggplot object
 g_legend <- function(a.gplot){
@@ -324,6 +363,57 @@ ecoregs$Ecoregion <- factor(ecoregs$id, levels = c(0:8),
 ecoregs <- ecoregs[!ecoregs$Ecoregion %in% c('DA', 'CCBP', 'LAP', 'NMW', 'SWTP'), ]
 ecoregs$Ecoregion <- droplevels(ecoregs$Ecoregion)
 
+# iteratively go through each model to get which pcnm axes were important 
+# which axes were chosen for which species
+spa_axs <- lapply(
+  spp_varmod, 
+  function(x){
+
+    spamod <- x$spa
+    
+    if(inherits(spamod, 'data.frame')) return(spamod$variables)
+    
+    out <- names(spamod$coefficients)
+    out <- out[!grepl('Intercept', out)]
+    
+    return(out)
+  
+  })
+
+# get potamogeton species with working var part mods
+tosel <- as.character(na.omit(pot_nms(names(spp_var), to_spp = F)))
+spa_axs <- spa_axs[names(spa_axs) %in% c('cc_mod', 'rich_mod', tosel)] %>% 
+  reshape2::melt(.)
+spa_axs <- table(spa_axs$value) %>% 
+  data.frame %>% 
+  mutate(Var1 = factor(Var1)) %>% 
+  mutate(Var1 = factor(Var1, levels = levels(Var1)[order(Freq)]))
+
+# ggplot(spa_axs, aes(x = Var1, y = Freq)) + 
+#   geom_bar(stat = 'identity')  
+
+# get top ranked PCNM axes by count, axis label ascending
+spa_axs <- spa_axs[rev(order(spa_axs$Var1)), ] %>% 
+  filter(Freq == max(Freq)) %>% 
+  dplyr::select(Var1) %>% 
+  mutate(Var1 = gsub('V', '', Var1)) %>% 
+  .$Var1 %>% 
+  as.numeric %>% 
+  sort %>% 
+  .[1:4] %>% 
+  paste0('V', .)
+
+# plot labels, PCNM axis and Moran value
+labs <- potam_PCNM$Moran_I[gsub('V', '', spa_axs), 'Moran'] %>% 
+  round(., 3) %>% 
+  paste0('Axis ', gsub('V', '', spa_axs), ', ', .)
+
+# format potams by selecting axes, rescaling values
+potams_pts <- potams[, c('Longitude', 'Latitude', spa_axs)] %>% 
+  gather(axis, value, -Longitude, -Latitude) %>% 
+  mutate(value = rescale(value, c(1, 9))) %>% 
+  spread(axis, value)
+
 # MN and WI maps
 pbase <- ggplot(mncounties, aes(x = long, y = lat)) + 
   geom_polygon(aes(group = group), fill = NA, colour = 'grey') +
@@ -344,43 +434,45 @@ pbase <- ggplot(mncounties, aes(x = long, y = lat)) +
     panel.background=element_blank(),panel.border=element_blank(),
     panel.grid.major=element_blank(),
     panel.grid.minor=element_blank(),plot.background=element_blank(), 
-    plot.margin = grid::unit(c(-0.1, -0.1, -0.1, -0.1), 'in')
+    plot.margin = grid::unit(c(0.2, -0.5, -0.2, -0.5), 'in')
     ) +
   coord_equal()
 
 # add spatial vars, 1 through 8 princomp
-
 alph <- 0.65
-rng <- c(1, 8)
 
 p1 <- pbase + 
-  geom_point(data = potams, aes(x = Longitude, y = Latitude, size = V1), alpha = alph) + 
-  scale_size_continuous(range = rng)
+  geom_point(data = potams_pts, aes_string(x = 'Longitude', y = 'Latitude'), size = potams_pts[, spa_axs[1]], alpha = alph) + 
+  scale_size_continuous(range = rng) + 
+  ggtitle(labs[1])
 
 p2 <- pbase + 
-  geom_point(data = potams, aes(x = Longitude, y = Latitude, size = V2), alpha = alph) + 
-  scale_size_continuous(range = rng)
+  geom_point(data = potams_pts, aes_string(x = 'Longitude', y = 'Latitude'), size = potams_pts[, spa_axs[2]], alpha = alph) + 
+  scale_size_continuous(range = rng) + 
+  ggtitle(labs[2])
 
 p3 <- pbase + 
-  geom_point(data = potams, aes(x = Longitude, y = Latitude, size = V3), alpha = alph) + 
-  scale_size_continuous(range = rng)
+  geom_point(data = potams_pts, aes_string(x = 'Longitude', y = 'Latitude'), size = potams_pts[, spa_axs[3]], alpha = alph) + 
+  scale_size_continuous(range = rng) + 
+  ggtitle(labs[3])
 
 p4 <- pbase + 
-  geom_point(data = potams, aes(x = Longitude, y = Latitude, size = V4), alpha = alph) + 
-  scale_size_continuous(range = rng)
+  geom_point(data = potams_pts, aes_string(x = 'Longitude', y = 'Latitude', size = spa_axs[4]), size = potams_pts[, spa_axs[4]], alpha = alph) +
+  ggtitle(labs[4])
 
-p5 <- pbase + 
-  geom_point(data = potams, aes(x = Longitude, y = Latitude, size = V5), alpha = alph) + 
-  scale_size_continuous(range = rng)
+pleg <- ggplot(mncounties, aes(x = long, y = lat)) + 
+  geom_polygon(data = ecoregs, aes(x = long, y = lat, group = group, fill= Ecoregion),  
+    alpha = 0.5) +
+  scale_fill_manual(values = brewer.pal(9, 'Greys')[c(3, 5, 7, 9)])
+pleg <- g_legend(pleg)
 
-p6 <- pbase + 
-  geom_point(data = potams, aes(x = Longitude, y = Latitude, size = V6), alpha = alph) + 
-  scale_size_continuous(range = rng)
-
-grid.arrange(p1, p2, p3, p4, p5, p6, ncol = 3)
-
-# iteratively go through each model to get which pcnm axes were important 
-
+# save plot
+tiff('figs/fig6.tif', height = 8, width = 9, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+grid.arrange(
+  arrangeGrob(p1, p2, p3, p4, ncol = 2),
+  pleg, ncol = 2, widths = c(1, 0.1)
+)
+dev.off()
 
 ######
 # tables
