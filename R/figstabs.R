@@ -16,6 +16,7 @@ source('R/funcs.R')
 # map
 
 load(file = 'data/all_potam.RData')
+load(file = 'data/spp_var.RData')
 
 # get legend from an existing ggplot object
 g_legend <- function(a.gplot){
@@ -57,6 +58,25 @@ toplo <- data.frame(potams) %>%
   data.frame
 labs <- list(expression(1), expression(phantom('')<=3), expression(phantom('')<=6), expression(phantom('')<=9), expression(phantom('')>9))
 
+# get weighted geographic centers for species with models
+geo_cen <- grep('^P\\.', names(spp_var), value = TRUE) %>% 
+  pot_nms(., to_spp = F) %>% 
+  grep('POSN|POSB|PFL', ., invert = T, value = T) %>% 
+  paste('^', ., '$', sep = '') %>% 
+  c('Longitude', 'Latitude', .) %>% 
+  paste(., collapse = '|') 
+geo_cen <- dplyr::select(data.frame(potams), matches(geo_cen, ignore.case = F)) %>% 
+  gather('spp', 'abu', -Latitude, -Longitude) %>% 
+  group_by(spp) %>% 
+  summarize(
+    Latitude = weighted.mean(Latitude, abu), 
+    Longitude = weighted.mean(Longitude, abu),
+    abu = mean(abu)
+  ) %>% 
+  ungroup %>% 
+  data.frame %>% 
+  mutate(abu = scales::rescale(abu, c(3.5, 7)))
+
 # MN and WI maps
 p1 <- ggplot(mncounties, aes(x = long, y = lat)) + 
   geom_polygon(aes(group = group), fill = NA, colour = 'grey') +
@@ -84,6 +104,34 @@ p1 <- ggplot(mncounties, aes(x = long, y = lat)) +
     ) +
   coord_equal()
 
+pleg <- g_legend(p1)
+p1 <- p1 + theme(legend.position = 'none')
+
+# geocenter map
+p2 <- ggplot(mncounties, aes(x = long, y = lat)) + 
+  geom_polygon(aes(group = group), fill = NA, colour = 'grey') +
+  geom_polygon(data = wicounties, aes(group = group), 
+    fill = NA, colour = 'grey') +
+  geom_polygon(data = wistate, aes(x = long, y = lat, group = group), fill = NA, 
+    colour = 'black') +
+  geom_polygon(data = mnstate, aes(x = long, y = lat), fill = NA, colour = 'black') + 
+  geom_polygon(data = ecoregs, aes(x = long, y = lat, group = group, fill= Ecoregion),  
+    alpha = 0.5) +
+  geom_text(data = geo_cen, aes(x = Longitude, y = Latitude, 
+    label = spp), alpha = 0.85, size = geo_cen$abu) +
+  scale_fill_manual(values = brewer.pal(9, 'Greys')[c(3, 5, 7, 9)]) +
+  theme_classic() + 
+  theme(axis.line=element_blank(),axis.text.x=element_blank(),
+          axis.text.y=element_blank(),axis.ticks=element_blank(),
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank(),
+          panel.background=element_blank(),panel.border=element_blank(),
+            panel.grid.major=element_blank(),
+          panel.grid.minor=element_blank(),plot.background=element_blank(), 
+          legend.position = 'none'
+    ) +
+  coord_equal()
+
 # inset map
 pinset <- ggplot(country, aes(x = long, y = lat, group = group)) + 
   geom_polygon(fill = NA, colour = 'grey') +
@@ -104,12 +152,17 @@ pinset <- ggplot(country, aes(x = long, y = lat, group = group)) +
   coord_equal()
 
 # save
-tiff('figs/fig1.tif', height = 6, width = 8, units = 'in', compression = 'lzw', res = 300, family = 'serif')
+tiff('figs/fig1.tif', height = 8, width = 6, units = 'in', compression = 'lzw', res = 300, family = 'serif')
 grid.newpage()
-v1 <- viewport(width = 1, height = 1, x = 0.5, y = 0.5) 
-v2 <- viewport(width = 0.25, height = 0.25, x = 0.6, y = 0.87)
+v1 <- viewport(width = 0.85, height = 0.85, x = 0.4, y = 0.73) 
+v2 <- viewport(width = 0.85, height = 0.85, x = 0.4, y = 0.27) 
+v3 <- viewport(width = 0.35, height = 0.35, x = 0.82, y = 0.9)
+v4 <- viewport(width = 0.2, height = .2, x = 0.9, y = 0.5)
 print(p1, vp = v1) 
-print(pinset, vp = v2)
+print(p2, vp = v2)
+print(pinset, vp = v3)
+pushViewport(v4)
+grid.draw(pleg)
 dev.off()
 
 ##
