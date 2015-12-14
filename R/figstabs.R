@@ -7,6 +7,8 @@ library(dplyr)
 library(tidyr)
 library(vegan)
 
+source('R/funcs.R')
+
 ######
 # figs
 
@@ -219,6 +221,7 @@ dev.off()
 
 data(all_potam)
 data(spp_var)
+data(spp_varmod)
 
 # select species in spp_var (models that worked) from all_potam, hellinger transform
 pots <- grep('^P\\.', names(spp_var), ignore.case = F, value = T) %>% 
