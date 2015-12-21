@@ -494,8 +494,8 @@ pbase <- ggplot(mncounties, aes(x = long, y = lat)) +
     ) +
   coord_equal()
 
-# add spatial vars, 1 through 8 princomp
-alph <- 0.65
+# add spatial vars, 1 through 4 princomp
+alph <- 0.55
 
 p1 <- pbase + 
   geom_point(data = potams_pts, aes_string(x = 'Longitude', y = 'Latitude'), size = potams_pts[, spa_axs[1]], alpha = alph) + 

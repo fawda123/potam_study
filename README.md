@@ -180,11 +180,3 @@ points(Latitude ~ Longitude, data = all_potam)
 
 ![](README_files/figure-html/unnamed-chunk-2-1.png) 
 
-## Qs
-
-* which pcnm axes are most important - get counts for each model, then plot spatially on map with scores, also RDA biplot (pay attention to P. crispus)
-* separate barplots by explanatory variable categories (local, etc.), order species from high to low
-* figure 1, fewer categories for species richness
-* what journal, color figs?
-* cumulative counts of species by lakes?
-* sort pot_spp_bla function to deal with species that do not include categories of variables
