@@ -75,7 +75,7 @@ geo_cen <- dplyr::select(data.frame(potams), matches(geo_cen, ignore.case = F)) 
   ) %>% 
   ungroup %>% 
   data.frame %>% 
-  mutate(abu = scales::rescale(abu, c(3.5, 7)))
+  mutate(abu = scales::rescale(abu, c(2, 10)))
 
 # MN and WI maps
 p1 <- ggplot(mncounties, aes(x = long, y = lat)) + 
@@ -117,8 +117,14 @@ p2 <- ggplot(mncounties, aes(x = long, y = lat)) +
   geom_polygon(data = mnstate, aes(x = long, y = lat), fill = NA, colour = 'black') + 
   geom_polygon(data = ecoregs, aes(x = long, y = lat, group = group, fill= Ecoregion),  
     alpha = 0.5) +
-  geom_text(data = geo_cen, aes(x = Longitude, y = Latitude, 
-    label = spp), alpha = 0.85, size = geo_cen$abu) +
+  geom_point(data = geo_cen, aes(x = Longitude, y = Latitude, size = abu), alpha = 0.85, size = geo_cen$abu) +
+  geom_label_repel(data = geo_cen, 
+    aes(x = Longitude, y = Latitude, label = spp),
+    point.padding = unit(0.3, "lines"),
+    box.padding = unit(2, "lines"),
+    segment.color = 'black',
+    segment.size = 0.5
+    ) +
   scale_fill_manual(values = brewer.pal(9, 'Greys')[c(3, 5, 7, 9)]) +
   theme_classic() + 
   theme(axis.line=element_blank(),axis.text.x=element_blank(),
