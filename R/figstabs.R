@@ -172,223 +172,6 @@ grid.draw(pleg)
 dev.off()
 
 ##
-# barplot of var part by species
-# separte barplots by pure, shared, and total 
-
-load(file = 'data/spp_var.RData')
-
-# long format, minor name formatting, neg exp var floored at zero
-toplo <- gather(spp_var, 'spp', 'exp', -var) %>% 
-  mutate(
-    exp = pmax(0, exp), 
-    var = gsub('^Local \\+ Climate \\+ Space$', 'All', var),
-    var = factor(
-      var, 
-      levels = c('Local', 'Climate', 'Space', 'Local + Climate', 'Climate + Space', 'Local + Space', 'All', 'Unexplained', 'Total')
-    )
-  ) %>% 
-  filter(var != 'Unexplained') %>% 
-  filter(!spp %in% c('Narrow-leaf Pondweed Group', 'Floating-leaf Water Smartweed Group')) %>% 
-  mutate(
-    var = droplevels(var),
-    spp = droplevels(spp),
-    var_comb = factor(var)
-  ) %>% 
-  data.frame
-levels(toplo$var_comb) <- c('Pure', 'Pure', 'Pure', 'Shared', 'Shared', 'Shared', 'Shared', 'Total')
-
-# color vectors
-cols <- paste0('grey', c('90', '70', '50', '60', '20', '40', '10'))
-
-# y limits
-ylims <- c(0, 0.45)
-
-# plot margins
-margs <- grid::unit(c(0.1,0.1,0.1,0.1), "cm")
-
-# bar width
-bwid <- 0.8 
-
-# total explained variance
-toplo1 <- filter(toplo, var_comb == 'Total')
-
-# get rank of total explained variance for each spp, keep assemb comp and richness first
-levs <- c(1, 2, rev(2 + order(toplo1$exp[-c(1,2)])))
-toplo1$spp <- factor(toplo1$spp, levels = levels(toplo1$spp)[levs])
-p1 <- ggplot(toplo1, aes(x = spp, y = exp)) + 
-  geom_bar(stat = 'identity', fill = NA, colour = 'black', width = bwid) + 
-  theme_bw() +
-  theme(
-    legend.title = element_blank(),
-    axis.title.x = element_blank(), 
-    axis.text.x = element_blank(), # element_text(angle = 90, hjust = 1, vjust = 0), 
-    panel.grid.major = element_blank(), 
-    panel.grid.minor = element_blank(),
-    plot.margin = margs
-    ) + 
-  facet_wrap(~var_comb) + 
-  geom_vline(xintercept = 2.5, size = 1) + 
-  scale_y_continuous('% explained', limits = ylims)
-  
-# pure effects
-toplo2 <- filter(toplo, var_comb == 'Pure')
-toplo2$spp <- factor(toplo2$spp, levels = levels(toplo2$spp)[levs]) # sort levels by order
-p2 <- ggplot(toplo2, aes(x = spp, y = exp, fill = var, order = -as.numeric(var))) + 
-  geom_bar(stat = 'identity', width = bwid) + 
-  theme_bw() +
-  theme(
-    legend.title = element_blank(),
-    axis.title.x = element_blank(), 
-    axis.text.x = element_blank(), #element_text(angle = 90, hjust = 1, vjust = 0), 
-    panel.grid.major = element_blank(), 
-    panel.grid.minor = element_blank(),
-    legend.position = c(1, 1), legend.justification = c(1, 1),
-    plot.margin = margs
-    ) + 
-  facet_wrap(~var_comb) + 
-  geom_vline(xintercept = 2.5, size = 1) + 
-  scale_fill_manual(values = cols[1:3]) + 
-  scale_y_continuous('% explained', limits = ylims)
-
-# shared effects  
-toplo3 <- filter(toplo, var_comb == 'Shared')
-toplo3$spp <- factor(toplo3$spp, levels = levels(toplo3$spp)[levs])
-p3 <- ggplot(toplo3, aes(x = spp, y = exp, fill = var, order = -as.numeric(var))) + 
-  geom_bar(stat = 'identity', width = bwid) + 
-  theme_bw() +
-  theme(
-    legend.title = element_blank(),
-    axis.title.x = element_blank(), 
-    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0), 
-    panel.grid.major = element_blank(), 
-    panel.grid.minor = element_blank(), 
-    legend.position = c(1, 1), legend.justification = c(1, 1),
-    plot.margin = margs
-    ) + 
-  facet_wrap(~var_comb) + 
-  geom_vline(xintercept = 2.5, size = 1) + 
-  scale_fill_manual(values = cols[4:7]) + 
-  scale_y_continuous('% explained', limits = ylims)
-
-# save
-tiff('figs/fig2.tif', height = 8, width = 6, units = 'in', compression = 'lzw', res = 300, family = 'serif')
-grid.arrange(p1, p2, p3, ncol = 1, heights = c(0.75, 0.75, 1))
-dev.off()
-
-##
-# rda biplots of species by local and climate variables
-
-data(all_potam)
-data(spp_var)
-data(spp_varmod)
-
-# select species in spp_var (models that worked) from all_potam, hellinger transform
-pots <- grep('^P\\.', names(spp_var), ignore.case = F, value = T) %>% 
-  gsub('^P\\.', 'Potamogeton', .) %>% 
-  pot_nms(., to_spp = FALSE)
-spp <- select(all_potam, matches(paste(pots, collapse = '|'), ignore.case = F)) %>% 
-  decostand(., method = 'hellinger')
-
-# exp variable columns
-loc_nm <- c('alk','color', 'tp', 'secchi', 'area', 'depth', 'perim')
-cli_nm <- c('tmean', 'tmax', 'tmin', 'prec', 'alt')
-spa_nm <- '^V'
-loc <- select(all_potam, matches(paste(loc_nm, collapse = '|')))
-cli <- select(all_potam, matches(paste(cli_nm, collapse = '|')))
-spa <- select(all_potam, matches(spa_nm, ignore.case = F))
-
-# iteratively go through each model to get which pcnm axes were important 
-# which axes were chosen for which species
-spa_axs <- lapply(
-  spp_varmod, 
-  function(x){
-
-    spamod <- x$spa
-    
-    if(inherits(spamod, 'data.frame')) return(spamod$variables)
-    
-    out <- names(spamod$coefficients)
-    out <- out[!grepl('Intercept', out)]
-    
-    return(out)
-  
-  })
-
-# get potamogeton species with working var part mods
-tosel <- as.character(na.omit(pot_nms(names(spp_var), to_spp = F)))
-spa_axs <- spa_axs[names(spa_axs) %in% c('cc_mod', 'rich_mod', tosel)] %>% 
-  reshape2::melt(.)
-spa_axs <- table(spa_axs$value) %>% 
-  data.frame %>% 
-  mutate(Var1 = factor(Var1)) %>% 
-  mutate(Var1 = factor(Var1, levels = levels(Var1)[order(Freq)]))
-
-# ggplot(spa_axs, aes(x = Var1, y = Freq)) + 
-#   geom_bar(stat = 'identity')  
-
-# get top ranked PCNM axes by count, axis label ascending
-spa_axs <- spa_axs[rev(order(spa_axs$Var1)), ] %>% 
-  .[1:10, ] %>% 
-  dplyr::select(Var1) %>% 
-  mutate(Var1 = gsub('V', '', Var1)) %>% 
-  .$Var1 %>% 
-  as.numeric %>% 
-  sort %>% 
-  .[1:10] %>% 
-  paste0('V', .)
-
-# rda mods
-mod_loc <- rda(spp, loc)
-mod_cli <- rda(spp, cli)
-mod_spa <- rda(spp, spa[, spa_axs])
-
-# biplots
-
-# local
-tiff('figs/fig3.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
-par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
-
-plot(mod_loc, type = 'n', xlim = c(-1, 1), xlab = '')
-points(mod_loc, pch=21, col=scales::alpha("black", 0.4), bg=scales::alpha("grey", 0.4), cex=0.8)
-text(mod_loc, dis = 'cn',  axis.bp = FALSE)
-
-plot(mod_loc, type = 'n', xlim = c(-1, 1))
-points(mod_loc, pch=21, col=scales::alpha("black", 0.4), bg=scales::alpha("grey", 0.4), cex=0.8)
-text(mod_loc, "species", col="black", cex=1)
-
-dev.off()
-
-# climate
-tiff('figs/fig4.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
-par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
-
-plot(mod_cli, type = 'n', xlim = c(-1, 1), xlab = '')
-points(mod_cli, pch=21, col=scales::alpha("black", 0.4), bg=scales::alpha("grey", 0.4), cex=0.8)
-text(mod_cli, dis = 'cn', axis.bp = FALSE)
-
-plot(mod_cli, type = 'n', xlim = c(-1, 1))
-points(mod_cli, pch=21, col=scales::alpha("black", 0.4), bg=scales::alpha("grey", 0.4), cex=0.8)
-text(mod_cli, "species", col="black", cex=1)
-
-dev.off()
-
-# spatial
-tiff('figs/fig5.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
-par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
-
-plot(mod_spa, type = 'n', xlim = c(-1, 1), xlab = '')
-points(mod_spa, pch=21, col=scales::alpha("black", 0.4), bg=scales::alpha("grey", 0.4), cex=0.8)
-text(mod_spa, dis = 'cn', axis.bp = FALSE)
-
-plot(mod_spa, type = 'n', xlim = c(-1, 1))
-points(mod_spa, pch=21, col=scales::alpha("black", 0.4), bg=scales::alpha("grey", 0.4), cex=0.8)
-text(mod_spa, "species", col="black", cex=1)
-
-dev.off()
-
-# ##
-
-##
 # important pcnm axes by mods
 
 data(spp_varmod)
@@ -529,11 +312,226 @@ pleg <- ggplot(mncounties, aes(x = long, y = lat)) +
 pleg <- g_legend(pleg)
 
 # save plot
-tiff('figs/fig6.tif', height = 8, width = 9, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+tiff('figs/fig2.tif', height = 8, width = 9, units = 'in', compression = 'lzw', res = 500, family = 'serif')
 grid.arrange(
   arrangeGrob(p1, p2, p3, p4, ncol = 2),
   pleg, ncol = 2, widths = c(1, 0.1)
 )
+dev.off()
+
+##
+# barplot of var part by species
+# separte barplots by pure, shared, and total 
+
+load(file = 'data/spp_var.RData')
+
+# long format, minor name formatting, neg exp var floored at zero
+toplo <- gather(spp_var, 'spp', 'exp', -var) %>% 
+  mutate(
+    exp = pmax(0, exp), 
+    var = gsub('^Local \\+ Climate \\+ Space$', 'All', var),
+    var = factor(
+      var, 
+      levels = c('Local', 'Climate', 'Space', 'Local + Climate', 'Climate + Space', 'Local + Space', 'All', 'Unexplained', 'Total')
+    )
+  ) %>% 
+  filter(var != 'Unexplained') %>% 
+  filter(!spp %in% c('Narrow-leaf Pondweed Group', 'Floating-leaf Water Smartweed Group')) %>% 
+  mutate(
+    var = droplevels(var),
+    spp = droplevels(spp),
+    var_comb = factor(var)
+  ) %>% 
+  data.frame
+levels(toplo$var_comb) <- c('Pure', 'Pure', 'Pure', 'Shared', 'Shared', 'Shared', 'Shared', 'Total')
+
+# color vectors
+cols <- paste0('grey', c('90', '70', '50', '60', '20', '40', '10'))
+
+# y limits
+ylims <- c(0, 0.45)
+
+# plot margins
+margs <- grid::unit(c(0.1,0.1,0.1,0.1), "cm")
+
+# bar width
+bwid <- 0.8 
+
+# total explained variance
+toplo1 <- filter(toplo, var_comb == 'Total')
+
+# get rank of total explained variance for each spp, keep assemb comp and richness first
+levs <- c(1, 2, rev(2 + order(toplo1$exp[-c(1,2)])))
+toplo1$spp <- factor(toplo1$spp, levels = levels(toplo1$spp)[levs])
+p1 <- ggplot(toplo1, aes(x = spp, y = exp)) + 
+  geom_bar(stat = 'identity', fill = NA, colour = 'black', width = bwid) + 
+  theme_bw() +
+  theme(
+    legend.title = element_blank(),
+    axis.title.x = element_blank(), 
+    axis.text.x = element_blank(), # element_text(angle = 90, hjust = 1, vjust = 0), 
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    plot.margin = margs
+    ) + 
+  facet_wrap(~var_comb) + 
+  geom_vline(xintercept = 2.5, size = 1) + 
+  scale_y_continuous('% explained', limits = ylims)
+  
+# pure effects
+toplo2 <- filter(toplo, var_comb == 'Pure')
+toplo2$spp <- factor(toplo2$spp, levels = levels(toplo2$spp)[levs]) # sort levels by order
+p2 <- ggplot(toplo2, aes(x = spp, y = exp, fill = var, order = -as.numeric(var))) + 
+  geom_bar(stat = 'identity', width = bwid) + 
+  theme_bw() +
+  theme(
+    legend.title = element_blank(),
+    axis.title.x = element_blank(), 
+    axis.text.x = element_blank(), #element_text(angle = 90, hjust = 1, vjust = 0), 
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(),
+    legend.position = c(1, 1), legend.justification = c(1, 1),
+    plot.margin = margs
+    ) + 
+  facet_wrap(~var_comb) + 
+  geom_vline(xintercept = 2.5, size = 1) + 
+  scale_fill_manual(values = cols[1:3]) + 
+  scale_y_continuous('% explained', limits = ylims)
+
+# shared effects  
+toplo3 <- filter(toplo, var_comb == 'Shared')
+toplo3$spp <- factor(toplo3$spp, levels = levels(toplo3$spp)[levs])
+p3 <- ggplot(toplo3, aes(x = spp, y = exp, fill = var, order = -as.numeric(var))) + 
+  geom_bar(stat = 'identity', width = bwid) + 
+  theme_bw() +
+  theme(
+    legend.title = element_blank(),
+    axis.title.x = element_blank(), 
+    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0), 
+    panel.grid.major = element_blank(), 
+    panel.grid.minor = element_blank(), 
+    legend.position = c(1, 1), legend.justification = c(1, 1),
+    plot.margin = margs
+    ) + 
+  facet_wrap(~var_comb) + 
+  geom_vline(xintercept = 2.5, size = 1) + 
+  scale_fill_manual(values = cols[4:7]) + 
+  scale_y_continuous('% explained', limits = ylims)
+
+# save
+tiff('figs/fig3.tif', height = 8, width = 6, units = 'in', compression = 'lzw', res = 300, family = 'serif')
+grid.arrange(p1, p2, p3, ncol = 1, heights = c(0.75, 0.75, 1))
+dev.off()
+
+##
+# rda biplots of species by local and climate variables
+
+data(all_potam)
+data(spp_var)
+data(spp_varmod)
+
+# select species in spp_var (models that worked) from all_potam, hellinger transform
+pots <- grep('^P\\.', names(spp_var), ignore.case = F, value = T) %>% 
+  gsub('^P\\.', 'Potamogeton', .) %>% 
+  pot_nms(., to_spp = FALSE)
+spp <- select(all_potam, matches(paste(pots, collapse = '|'), ignore.case = F)) %>% 
+  decostand(., method = 'hellinger')
+
+# exp variable columns
+loc_nm <- c('alk','color', 'tp', 'secchi', 'area', 'depth', 'perim')
+cli_nm <- c('tmean', 'tmax', 'tmin', 'prec', 'alt')
+spa_nm <- '^V'
+loc <- select(all_potam, matches(paste(loc_nm, collapse = '|')))
+cli <- select(all_potam, matches(paste(cli_nm, collapse = '|')))
+spa <- select(all_potam, matches(spa_nm, ignore.case = F))
+
+# iteratively go through each model to get which pcnm axes were important 
+# which axes were chosen for which species
+spa_axs <- lapply(
+  spp_varmod, 
+  function(x){
+
+    spamod <- x$spa
+    
+    if(inherits(spamod, 'data.frame')) return(spamod$variables)
+    
+    out <- names(spamod$coefficients)
+    out <- out[!grepl('Intercept', out)]
+    
+    return(out)
+  
+  })
+
+# get potamogeton species with working var part mods
+tosel <- as.character(na.omit(pot_nms(names(spp_var), to_spp = F)))
+spa_axs <- spa_axs[names(spa_axs) %in% c('cc_mod', 'rich_mod', tosel)] %>% 
+  reshape2::melt(.)
+spa_axs <- table(spa_axs$value) %>% 
+  data.frame %>% 
+  mutate(Var1 = factor(Var1)) %>% 
+  mutate(Var1 = factor(Var1, levels = levels(Var1)[order(Freq)]))
+
+# ggplot(spa_axs, aes(x = Var1, y = Freq)) + 
+#   geom_bar(stat = 'identity')  
+
+# get top ranked PCNM axes by count, axis label ascending
+spa_axs <- spa_axs[rev(order(spa_axs$Var1)), ] %>% 
+  .[1:10, ] %>% 
+  dplyr::select(Var1) %>% 
+  mutate(Var1 = gsub('V', '', Var1)) %>% 
+  .$Var1 %>% 
+  as.numeric %>% 
+  sort %>% 
+  .[1:10] %>% 
+  paste0('V', .)
+
+# rda mods
+mod_loc <- rda(spp, loc)
+mod_cli <- rda(spp, cli)
+mod_spa <- rda(spp, spa[, spa_axs])
+
+# biplots
+
+# local
+tiff('figs/fig4.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
+
+plot(mod_loc, type = 'n', xlim = c(-1, 1), xlab = '')
+points(mod_loc, pch=21, col=scales::alpha("black", 0.4), bg=scales::alpha("grey", 0.4), cex=0.8)
+text(mod_loc, dis = 'cn',  axis.bp = FALSE)
+
+plot(mod_loc, type = 'n', xlim = c(-1, 1))
+points(mod_loc, pch=21, col=scales::alpha("black", 0.4), bg=scales::alpha("grey", 0.4), cex=0.8)
+text(mod_loc, "species", col="black", cex=1)
+
+dev.off()
+
+# climate
+tiff('figs/fig5.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
+
+plot(mod_cli, type = 'n', xlim = c(-1, 1), xlab = '')
+points(mod_cli, pch=21, col=scales::alpha("black", 0.4), bg=scales::alpha("grey", 0.4), cex=0.8)
+text(mod_cli, dis = 'cn', axis.bp = FALSE)
+
+plot(mod_cli, type = 'n', xlim = c(-1, 1))
+points(mod_cli, pch=21, col=scales::alpha("black", 0.4), bg=scales::alpha("grey", 0.4), cex=0.8)
+text(mod_cli, "species", col="black", cex=1)
+
+dev.off()
+
+# spatial
+tiff('figs/fig6.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
+
+plot(mod_spa, type = 'n', xlim = c(-1, 1), xlab = '')
+points(mod_spa, pch=21, col=scales::alpha("black", 0.4), bg=scales::alpha("grey", 0.4), cex=0.8)
+text(mod_spa, dis = 'cn', axis.bp = FALSE)
+
+plot(mod_spa, type = 'n', xlim = c(-1, 1))
+points(mod_spa, pch=21, col=scales::alpha("black", 0.4), bg=scales::alpha("grey", 0.4), cex=0.8)
+text(mod_spa, "species", col="black", cex=1)
+
 dev.off()
 
 ######
