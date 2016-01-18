@@ -69,3 +69,20 @@ all_potam <- data.frame(all_potam, potam.PCNM)
 # save
 save(all_potam, file = 'data/all_potam.RData')
 
+##
+# add ecoregions to the data
+library(maptools)
+library(sp)
+
+data(all_potam)
+
+# get spatial data, then overlay
+ecoregs <- readShapeSpatial('M:/GIS/mnwi_eco3utm.shp')
+potams <- readShapeSpatial('M:/GIS/all_potam.shp') 
+tmp <- over(potams, ecoregs)
+
+# add overlay column to all_potam (order is the same)
+all_potam$Ecoregion <- tmp$US_L3NAME
+
+# save
+save(all_potam, file = 'data/all_potam.RData')
