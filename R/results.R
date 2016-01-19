@@ -36,4 +36,13 @@ abundecost <- dplyr::select(all_potam, matches('^P|Ecoregion|state', ignore.case
 
 ##
 # variation in lake characteristics
-# lakechr <- select(all_potam, 
+locchrs <- select(all_potam, depth, area, perim, secchi, color, alk, tp, state, Ecoregion) %>% 
+  group_by(state, Ecoregion) %>% 
+  summarize_each(funs(mean(., na.rm = T)))
+   
+clichrs <- select(all_potam, tmean, tmax, tmin, prec, alt, state) %>% 
+  group_by(state) %>% 
+  summarize_each(funs(mean(., na.rm = T)))
+     
+ggplot(all_potam, aes(x = Longitude, y = Latitude, size = tmean)) + 
+  geom_point()
