@@ -1,3 +1,6 @@
+######
+# random stuff to help with results section
+
 library(dplyr)
 library(tidyr)
 
@@ -46,3 +49,8 @@ clichrs <- select(all_potam, tmean, tmax, tmin, prec, alt, state) %>%
      
 ggplot(all_potam, aes(x = Longitude, y = Latitude, size = tmean)) + 
   geom_point()
+
+##
+# model eval
+data(spp_var)
+data(spp_varmod)
