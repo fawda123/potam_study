@@ -62,7 +62,6 @@ labs <- list(expression(1), expression(phantom('')<=3), expression(phantom('')<=
 # get weighted geographic centers for species with models
 geo_cen <- grep('^P\\.', names(spp_var), value = TRUE) %>% 
   pot_nms(., to_spp = F) %>% 
-  grep('POSN|POSB|PFL', ., invert = T, value = T) %>% 
   paste('^', ., '$', sep = '') %>% 
   c('Longitude', 'Latitude', .) %>% 
   paste(., collapse = '|') 
@@ -333,8 +332,7 @@ toplo <- gather(spp_var, 'spp', 'exp', -var) %>%
       levels = c('Local', 'Climate', 'Space', 'Local + Climate', 'Climate + Space', 'Local + Space', 'All', 'Unexplained', 'Total')
     )
   ) %>% 
-  filter(var != 'Unexplained') %>% 
-  filter(!spp %in% c('Narrow-leaf Pondweed Group', 'Floating-leaf Water Smartweed Group')) %>% 
+  filter(var != 'Unexplained') %>%
   mutate(
     var = droplevels(var),
     spp = droplevels(spp),
@@ -435,6 +433,7 @@ data(spp_varmod)
 
 # select species in spp_var (models that worked) from all_potam, hellinger transform
 pots <- grep('^P\\.', names(spp_var), ignore.case = F, value = T) %>% 
+  grep('^P\\. alpinus', ., invert = TRUE, value = TRUE) %>% # remove p. alpinus
   gsub('^P\\.', 'Potamogeton', .) %>% 
   pot_nms(., to_spp = FALSE) %>% 
   paste0('^', ., '$')
@@ -583,7 +582,6 @@ totab <- gather(spp_var, 'spp', 'exp', -var) %>%
     ), 
     exp = 100 * exp
   ) %>% 
-  filter(!spp %in% c('Narrow-leaf Pondweed Group', 'Floating-leaf Water Smartweed Group')) %>% 
   spread(var, exp) %>% 
   dplyr::select(-Unexplained)
 

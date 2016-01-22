@@ -67,6 +67,11 @@ spp_var <- do.call('rbind', pot_mod) %>%
 names(spp_var)[grep('^P', names(spp_var))] <- pot_nms(names(spp_var)[grep('^P', names(spp_var))])
 names(spp_var)[names(spp_var) %in% c('cc_mod', 'rich_mod')] <- c('Assemb. comp.', 'Richness')
 
+# remove stupid species (groups and p. alpinus with very low total explained var
+tokp <- c('^Narrow|^P\\. alpinus$|^Floating|^Broad')
+tokp <- grep(tokp, names(spp_var), invert = T, ignore.case = F)
+spp_var <- spp_var[, tokp]  
+
 # save
 save(spp_var, file = 'data/spp_var.RData')
 

@@ -54,3 +54,33 @@ ggplot(all_potam, aes(x = Longitude, y = Latitude, size = tmean)) +
 # model eval
 data(spp_var)
 data(spp_varmod)
+
+## 
+# potam in dataset
+pots <- grep('^P', names(all_potam), value = T)
+pots <- pot_nms(pots, to_spp = T) %>% 
+  grep('^Floating|Narrow|Broad', ., invert = T, value = T)
+
+# species not modelled
+# counts by lake of those not modelled
+notmod <- sort(pots[!pots %in% names(spp_var)])
+notmodcts <- all_potam[, pot_nms(notmod, to_spp = F)] %>% 
+  apply(., 2, function(x) pmin(1, x)) %>% 
+  colSums %>% 
+  .[.>0]
+notmod <- pot_nms(names(notmodcts), to_spp = T)
+
+# where are they located
+toget <- rowSums(all_potam[, names(notmodcts)]) > 0
+all_potam$rares <- 'black'
+all_potam[toget, 'rares'] <- 'blue'
+notrares <- 
+  toget <- rowSums(all_potam[, names(notmodcts)]) > 0
+
+# are the explanatory variables different between rare/not rare?
+tomod <- dplyr::select(all_potam, depth, area, perim, secchi, color, alk, tp, Latitude, Longitude, tmean, tmax, tmin, prec, alt, rares) %>% 
+  gather('var', 'val', -rares) %>% 
+  split(., .$var) %>% 
+  lapply(., function(x){
+    t.test(val ~ rares, data = x)
+    })
