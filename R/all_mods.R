@@ -3,15 +3,15 @@
 
 library(vegan)
 library(packfor)
-library(dplyr)
 library(venneuler)
 library(PCNM)
+library(dplyr)
 
 load(file = 'data/all_potam.RData')
 
 # add richness
 # Janne used sum of all abundances as richness
-all_potam <- select(all_potam, matches('^P', ignore.case = F)) %>% 
+all_potam <- dplyr::select(all_potam, matches('^P', ignore.case = F)) %>% 
   rowSums %>% 
   data.frame(all_potam, S = .)
 
@@ -26,11 +26,11 @@ rich_mod <- pot_var_bla(all_potam, '^S$')
 ##
 # individual species mods, repeated for each species
 
-pot_nms <- grep('^P', names(all_potam), ignore.case = F, value = T)
+pots <- grep('^P', names(all_potam), ignore.case = F, value = T)
 
-pot_mod <- vector('list', length(pot_nms))
-names(pot_mod) <- pot_nms
-for(pot in pot_nms){
+pot_mod <- vector('list', length(pots))
+names(pot_mod) <- pots
+for(pot in pots){
  
   cat(pot, '\t') 
   tmp_mod <- try({pot_var_bla(all_potam, paste0('^', pot, '$'))})
@@ -79,18 +79,19 @@ cc_mod <- pot_var_bla(all_potam, '^P', mod_out = TRUE)
 
 ## 
 # richness model
-rich_mod <- pot_var(all_potam, '^S$', mod_out = TRUE)
+rich_mod <- pot_var_bla(all_potam, '^S$', mod_out = TRUE)
 
 ##
 # individual species mods, repeated for each species
-
-pot_nms <- grep('^P', names(all_potam), ignore.case = F, value = T)
+data(spp_var)
+pots <- grep('^P\\.', names(spp_var), value = TRUE)
+pots <- pot_nms(pots, to_spp = F)
 
 pot_mod <- list()
-for(pot in pot_nms){
+for(pot in pots){
  
   cat(pot, '\t') 
-  tmp_mod <- try({pot_var(all_potam, paste0('^', pot, '$'), mod_out = TRUE)})
+  tmp_mod <- try({pot_var_bla(all_potam, paste0('^', pot, '$'), mod_out = TRUE)})
   
   # go to next variable if error
   if(inherits(tmp_mod, 'try-error')) next
@@ -102,6 +103,7 @@ for(pot in pot_nms){
 
 # combine all into list, save
 spp_varmod <- c(cc_mod = list(cc_mod), rich_mod = list(rich_mod), pot_mod)
+
 save(spp_varmod, file = 'data/spp_varmod.RData')
 
 ######

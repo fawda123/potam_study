@@ -99,104 +99,22 @@ clim_fun <- function(path, ext_dat, mos = 1:12){
   
 }
 
-######
-# run partial redundancy analysis or partial least squares, then variance partitioning
-#
-# dat_in: all_potam data frame
-# resp_in: chr string of variables to model (one to many), uses regexpr matching to select from dat_in
-# 
-# output is numeric vector pure x1, pure x2, pure x3, shared x1/x2, shared x2/x3, shared x1/x3, shared x1/x2/x3, residual, where x1 is loc, x2 is cli, x3 is spa
-pot_var <- function(dat_in, resp_nm, mod_out = FALSE){
-  
-  library(vegan)
-  library(packfor)
-  library(dplyr)
-  
-  # names of variables to select
-  loc_nm <- c('alk','color', 'tp', 'secchi', 'area', 'depth')
-  cli_nm <- c('tmean', 'tmax', 'tmin', 'prec', 'alt')
-  spa_nm <- '^V'
-  
-  # subset dat_in by explanatory variable sets
-  loc <- select(dat_in, matches(paste(loc_nm, collapse = '|')))
-  cli <- select(dat_in, matches(paste(cli_nm, collapse = '|')))
-  spa <- select(dat_in, matches(spa_nm, ignore.case = F))
-  
-  # subset dat_in by response variable(s)
-  res <- select(dat_in, matches(resp_nm, ignore.case = F))
-  
-  # use RDA if res more than one variable
-  # otherwise, glm
-  if(ncol(res) > 1){
-    
-    loc_sel <- forward.sel(res, loc)
-    loc <- loc[, names(loc) %in% loc_sel$variables]
-    cli_sel <- forward.sel(res, cli)
-    cli <- cli[, names(cli) %in% cli_sel$variables]
-    spa_sel <- forward.sel(res, spa)
-    spa <- spa[, names(spa) %in% spa_sel$variables]
-    
-    mod <- varpart(Y = res, X = loc, cli, spa, transfo = 'hel')
-     
-  } else {
-
-    # strip resp_nm for mods
-    resp_nm <- gsub('\\^|\\$', '', resp_nm)
-    
-    # local mod
-    loc_sel <- paste0(resp_nm, ' ~ ', paste(loc_nm, collapse = ' + '))
-    loc_sel <- glm(as.formula(loc_sel), family = poisson(link = 'log'), 
-      data = dat_in, offset = log(tot)) %>% 
-      MASS::stepAIC(., direction = 'both', criterion = 'AIC', trace = F)
-    modloc <- formula(loc_sel)[c(1, 3)]
-    
-    # climate mod
-    cli_sel <- paste0(resp_nm, ' ~ ', paste(cli_nm, collapse = ' + '))
-    cli_sel <- glm(as.formula(cli_sel), family = poisson(link = 'log'), 
-      data = dat_in, offset = log(tot)) %>% 
-      MASS::stepAIC(., direction = 'both', criterion = 'AIC', trace = F)
-    modcli <- formula(cli_sel)[c(1, 3)]
-    
-    # spatial mod, stepwise, then get formula
-    form <- grep(spa_nm, names(dat_in), value = T) %>% 
-      paste(., collapse = ' + ') %>% 
-      paste0(resp_nm, ' ~ ', .) %>% 
-      as.formula
-    spa_sel <- glm(form, data = dat_in, family = poisson(link = 'log'), offset = log(tot)) %>% 
-      MASS::stepAIC(., direction = 'both', criterion = 'AIC', trace = F)
-    modspa <- formula(spa_sel)[c(1, 3)]
-    
-    # variance partitioning
-    mod <- varpart(res[, 1], modloc, modcli, modspa, data = dat_in)
-        
-  }
-
-  # return individual models if true
-  if(mod_out) return(list(loc = loc_sel, cli = cli_sel, spa = spa_sel))
-  
-  # get fractions of variance, 
-  # pure x1, pure x2, pure x3, shared x1/x2, shared x2/x3, shared x1/x3, shared x1/x2/x3, residual
-  vars <- mod$part$indfract[, 'Adj.R.square']
-  names(vars) <- c('loc', 'cli', 'spa', 'loc + cli', 'cli + spa', 'loc + spa', 'loc + cli + spa', 'res')
-  return(vars) 
-   
-}
-
 # forward variable selection of rda using blanchet
-bla_sel <- function(resp, exp){
+bla_sel <- function(resp, exp, forout = FALSE){
   
   library(packfor)
+  library(vegan)
 
-  mod <- rda(resp, exp)
+  # hellinger trans if multivariate
+  if(ncol(resp) > 1) 
+    resp <- decostand(resp, method = 'hellinger')
+  
+  mod <- rda(Y = resp, X = exp)
   mod_R2a <- RsquareAdj(mod)$adj.r.squared
-  modfwd <- forward.sel(resp, as.matrix(exp), adjR2thresh = mod_R2a, nperm = 999)
+  modfwd <- forward.sel(resp, as.matrix(exp), nperm = 999)
   
-  # Write the significant variables to a new object
-  exp_sign <- sort(modfwd$order)
-  vars_ho <- exp[, c(exp_sign), drop = F]
-  
-  colnames(vars_ho)
-  
+  return(modfwd)
+
 }
 
 ######
@@ -213,27 +131,74 @@ pot_var_bla <- function(dat_in, resp_nm, mod_out = FALSE){
   spa_nm <- '^V'
   
   # subset dat_in by explanatory variable sets
-  loc <- select(dat_in, matches(paste(loc_nm, collapse = '|')))
-  cli <- select(dat_in, matches(paste(cli_nm, collapse = '|')))
-  spa <- select(dat_in, matches(spa_nm, ignore.case = F))
+  loc <- dplyr::select(dat_in, matches(paste(loc_nm, collapse = '|')))
+  cli <- dplyr::select(dat_in, matches(paste(cli_nm, collapse = '|')))
+  spa <- dplyr::select(dat_in, matches(spa_nm, ignore.case = F))
   
   # subset dat_in by response variable(s)
-  res <- select(dat_in, matches(resp_nm, ignore.case = F))
+  res <- dplyr::select(dat_in, matches(resp_nm, ignore.case = F))
 
   # otherwise, glm
   loc_sel <- bla_sel(res, loc)
-  loc <- loc[, loc_sel, drop = FALSE]
   cli_sel <- bla_sel(res, cli)
-  cli <- cli[, cli_sel, drop = FALSE]
   spa_sel <- bla_sel(res, spa)
-  spa <- spa[, spa_sel, drop = FALSE]
-
+  
+  # multivariate mod
   if(ncol(res) > 1){
+  
+    # return variable selection by category
+    if(mod_out) return(list(loc = loc_sel, cli = cli_sel, spa = spa_sel)) 
+      
+    loc <- loc[, sort(loc_sel$order), drop = F]
+    cli <- cli[, sort(cli_sel$order), drop = F]
+    spa <- spa[, sort(spa_sel$order), drop = F]
+    
     mod <- varpart(Y = res, X = loc, cli, spa, transfo = 'hel')
-  } else {
-    mod <- varpart(Y = res, X = loc, cli, spa)
-  }
 
+  # univariate mod
+  } else {
+     
+    loc <- loc[, sort(loc_sel$order), drop = F]
+    cli <- cli[, sort(cli_sel$order), drop = F]
+    spa <- spa[, sort(spa_sel$order), drop = F]
+    
+    if(mod_out) {
+      
+      # strip resp_nm for mods
+      resp_nm <- gsub('\\^|\\$', '', resp_nm)
+      
+      # local model
+      loc_sel <- paste0(resp_nm, ' ~ ', paste(names(loc), collapse = ' + '))
+      modloc <- glm(as.formula(loc_sel), family = poisson(link = 'log'), 
+        data = dat_in) 
+      
+      # climate model
+      cli_sel <- paste0(resp_nm, ' ~ ', paste(names(cli), collapse = ' + '))
+      modcli <- glm(as.formula(cli_sel), family = poisson(link = 'log'), 
+        data = dat_in) 
+      
+      # space model
+      spa_sel <- paste0(resp_nm, ' ~ ', paste(names(spa), collapse = ' + '))
+      modspa <- glm(as.formula(spa_sel), family = poisson(link = 'log'), 
+        data = dat_in) 
+      
+      # adj rsquared from rda of the mods, no easy way to do this with glms
+      exps <- list(
+        loc = rda(res, loc),
+        cli = rda(res, cli),
+        spa = rda(res, spa)
+      )
+      exps <- lapply(exps, function(x) RsquareAdj(x)$adj.r.squared)
+      exps <- unlist(exps)
+      
+      return(list(loc = modloc, cli = modcli, spa = modspa, exps = exps))
+          
+    } 
+    
+    mod <- varpart(Y = res, X = loc, cli, spa)   
+    
+  }
+  
   # get fractions of variance, 
   # pure x1, pure x2, pure x3, shared x1/x2, shared x2/x3, shared x1/x3, shared x1/x2/x3, residual
   vars <- mod$part$indfract[, 'Adj.R.square']
@@ -297,7 +262,7 @@ pot_summ <- function(spp_varmod){
   cli_mods <- spp_summ(spp_varmod, 2, 'cli')
   spa_mods <- spp_summ(spp_varmod, 3, 'spa')
   
-  # combine eqach group mod
+  # combine each group mod
   all_mods <- rbind(loc_mods, cli_mods, spa_mods) %>% 
     mutate(
       spp = row.names(.),
@@ -336,8 +301,7 @@ pot_summ <- function(spp_varmod){
   cc_exp <- lapply(cc_varmod, function(x) max(x[, 'AdjR2Cum']) * 100) %>% 
     as.data.frame(., row.names = c('Assemb. comp.'))
   sp_exp <- lapply(spp_varmod, function(spp){
-    out <- lapply(spp , function(mod) 100 * Dsquared(mod, adjust = TRUE))
-    unlist(out)
+    100 * spp$exps
     }) %>% 
     do.call('rbind', .) %>% 
     as.data.frame
@@ -408,61 +372,3 @@ pot_nms <- function(chr_in, to_spp = TRUE, abb_spp = TRUE){
   
 }
 
-######
-# deviance squared for GLM
-# https://modtools.wordpress.com/2013/08/14/dsquared/
-Dsquared <- function(model = NULL, 
-                     obs = NULL, 
-                     pred = NULL, 
-                     family = NULL, # needed only when 'model' not provided
-                     adjust = FALSE, 
-                     npar = NULL) { # needed only when 'model' not provided
-  # version 1.4 (31 Aug 2015)
- 
-  model.provided <- ifelse(is.null(model), FALSE, TRUE)
- 
-  if (model.provided) {
-    if (!("glm" %in% class(model))) stop ("'model' must be of class 'glm'.")
-    if (!is.null(pred)) message("Argument 'pred' ignored in favour of 'model'.")
-    if (!is.null(obs)) message("Argument 'obs' ignored in favour of 'model'.")
-    obs <- model$y
-    pred <- model$fitted.values
- 
-  } else { # if model not provided
-    if (is.null(obs) | is.null(pred)) stop ("You must provide either 'obs' and 'pred', or a 'model' object of class 'glm'.")
-    if (length(obs) != length(pred)) stop ("'obs' and 'pred' must be of the same length (and in the same order).")
-    if (is.null(family)) stop ("With 'obs' and 'pred' arguments (rather than a model object), you must also specify one of two model family options: 'binomial' or 'poisson' (in quotes).")
-    else if (!is.character(family)) stop ("Argument 'family' must be provided as character (i.e. in quotes: 'binomial' or 'poisson').")
-    else if (length(family) != 1 | !(family %in% c("binomial", "poisson"))) stop ("'family' must be either 'binomial' or 'poisson' (in quotes).")
- 
-    if (family == "binomial") {
-      if (any(!(obs %in% c(0, 1)) | pred < 0 | pred > 1)) stop ("'binomial' family implies that 'obs' data should be binary (with values 0 or 1) and 'pred' data should be bounded between 0 and 1.")
-      link <- log(pred / (1 - pred))  # logit
-    }  # end if binomial
- 
-    else if (family == "poisson") {
-      if (any(obs %%1 != 0)) stop ("'poisson' family implies that 'obs' data should consist of whole numbers.")
-      link <- log(pred)
-    }  # end if poisson
- 
-    model <- glm(obs ~ link, family = family)
-  }  # end if model not provided
- 
-  D2 <- (model$null.deviance - model$deviance) / model$null.deviance
- 
-  if (adjust) {
-    if (model.provided) {
-      n <- length(model$y)
-      #p <- length(model$coefficients)
-      p <- attributes(logLik(model))$df
-    } else {
-      if (is.null(npar)) stop ("Adjusted D-squared from 'obs' and 'pred' values (rather than a model object) requires specifying the number of parameters in the underlying model ('npar').")
-      n <- length(na.omit(obs))
-      p <- npar
-    }  # end if model.provided else
- 
-    D2 <- 1 - ((n - 1) / (n - p)) * (1 - D2)
-  }  # end if adjust
- 
-  return (D2)
-}

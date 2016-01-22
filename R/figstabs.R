@@ -6,6 +6,7 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(vegan)
+library(ggrepel)
 
 source('R/funcs.R')
 
@@ -213,7 +214,7 @@ ecoregs$Ecoregion <- droplevels(ecoregs$Ecoregion)
 spa_axs <- lapply(
   spp_varmod, 
   function(x){
-
+  
     spamod <- x$spa
     
     if(inherits(spamod, 'data.frame')) return(spamod$variables)
@@ -225,10 +226,8 @@ spa_axs <- lapply(
   
   })
 
-# get potamogeton species with working var part mods
-tosel <- as.character(na.omit(pot_nms(names(spp_var), to_spp = F)))
-spa_axs <- spa_axs[names(spa_axs) %in% c('cc_mod', 'rich_mod', tosel)] %>% 
-  reshape2::melt(.)
+# create factor levels of axes based on counts in models
+spa_axs <- reshape2::melt(spa_axs)
 spa_axs <- table(spa_axs$value) %>% 
   data.frame %>% 
   mutate(Var1 = factor(Var1)) %>% 
@@ -239,13 +238,12 @@ spa_axs <- table(spa_axs$value) %>%
 
 # get top ranked PCNM axes by count, axis label ascending
 spa_axs <- spa_axs[rev(order(spa_axs$Var1)), ] %>% 
-  filter(Freq == max(Freq)) %>% 
   dplyr::select(Var1) %>% 
   mutate(Var1 = gsub('V', '', Var1)) %>% 
   .$Var1 %>% 
   as.numeric %>% 
-  sort %>% 
   .[1:4] %>% 
+  sort %>% 
   paste0('V', .)
 
 # plot labels, PCNM axis and Moran value
@@ -395,7 +393,9 @@ p2 <- ggplot(toplo2, aes(x = spp, y = exp, fill = var, order = -as.numeric(var))
     ) + 
   facet_wrap(~var_comb) + 
   geom_vline(xintercept = 2.5, size = 1) + 
-  scale_fill_manual(values = cols[1:3]) + 
+  scale_fill_manual(values = cols[1:3], 
+     guide = guide_legend(reverse = TRUE)
+    ) + 
   scale_y_continuous('% explained', limits = ylims)
 
 # shared effects  
@@ -415,7 +415,10 @@ p3 <- ggplot(toplo3, aes(x = spp, y = exp, fill = var, order = -as.numeric(var))
     ) + 
   facet_wrap(~var_comb) + 
   geom_vline(xintercept = 2.5, size = 1) + 
-  scale_fill_manual(values = cols[4:7]) + 
+  scale_fill_manual(
+    values = cols[4:7], 
+    guide = guide_legend(reverse = TRUE)
+    ) + 
   scale_y_continuous('% explained', limits = ylims)
 
 # save
@@ -433,24 +436,25 @@ data(spp_varmod)
 # select species in spp_var (models that worked) from all_potam, hellinger transform
 pots <- grep('^P\\.', names(spp_var), ignore.case = F, value = T) %>% 
   gsub('^P\\.', 'Potamogeton', .) %>% 
-  pot_nms(., to_spp = FALSE)
-spp <- select(all_potam, matches(paste(pots, collapse = '|'), ignore.case = F)) %>% 
+  pot_nms(., to_spp = FALSE) %>% 
+  paste0('^', ., '$')
+spp <- dplyr::select(all_potam, matches(paste(pots, collapse = '|'), ignore.case = F)) %>% 
   decostand(., method = 'hellinger')
 
 # exp variable columns
 loc_nm <- c('alk','color', 'tp', 'secchi', 'area', 'depth', 'perim')
 cli_nm <- c('tmean', 'tmax', 'tmin', 'prec', 'alt')
 spa_nm <- '^V'
-loc <- select(all_potam, matches(paste(loc_nm, collapse = '|')))
-cli <- select(all_potam, matches(paste(cli_nm, collapse = '|')))
-spa <- select(all_potam, matches(spa_nm, ignore.case = F))
+loc <- dplyr::select(all_potam, matches(paste(loc_nm, collapse = '|')))
+cli <- dplyr::select(all_potam, matches(paste(cli_nm, collapse = '|')))
+spa <- dplyr::select(all_potam, matches(spa_nm, ignore.case = F))
 
 # iteratively go through each model to get which pcnm axes were important 
 # which axes were chosen for which species
 spa_axs <- lapply(
   spp_varmod, 
   function(x){
-
+  
     spamod <- x$spa
     
     if(inherits(spamod, 'data.frame')) return(spamod$variables)
@@ -462,10 +466,8 @@ spa_axs <- lapply(
   
   })
 
-# get potamogeton species with working var part mods
-tosel <- as.character(na.omit(pot_nms(names(spp_var), to_spp = F)))
-spa_axs <- spa_axs[names(spa_axs) %in% c('cc_mod', 'rich_mod', tosel)] %>% 
-  reshape2::melt(.)
+# create factor levels of axes based on counts in models
+spa_axs <- reshape2::melt(spa_axs)
 spa_axs <- table(spa_axs$value) %>% 
   data.frame %>% 
   mutate(Var1 = factor(Var1)) %>% 
@@ -476,13 +478,12 @@ spa_axs <- table(spa_axs$value) %>%
 
 # get top ranked PCNM axes by count, axis label ascending
 spa_axs <- spa_axs[rev(order(spa_axs$Var1)), ] %>% 
-  .[1:10, ] %>% 
   dplyr::select(Var1) %>% 
   mutate(Var1 = gsub('V', '', Var1)) %>% 
   .$Var1 %>% 
   as.numeric %>% 
-  sort %>% 
   .[1:10] %>% 
+  sort %>% 
   paste0('V', .)
 
 # rda mods
@@ -584,7 +585,7 @@ totab <- gather(spp_var, 'spp', 'exp', -var) %>%
   ) %>% 
   filter(!spp %in% c('Narrow-leaf Pondweed Group', 'Floating-leaf Water Smartweed Group')) %>% 
   spread(var, exp) %>% 
-  select(-Unexplained)
+  dplyr::select(-Unexplained)
 
 names(totab)[names(totab) %in% 'spp'] <- ''
 
