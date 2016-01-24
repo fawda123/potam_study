@@ -71,6 +71,9 @@ save(all_potam, file = 'data/all_potam.RData')
 
 ##
 # add ecoregions to the data
+# remove lakes with very low sample effort (tot < 20)
+# add total richness (S)
+
 library(maptools)
 library(sp)
 
@@ -84,19 +87,22 @@ tmp <- over(potams, ecoregs)
 # add overlay column to all_potam (order is the same)
 all_potam$Ecoregion <- tmp$US_L3NAME
 
-# save
-save(all_potam, file = 'data/all_potam.RData')
-
-##
-# add total richness of potams at a lake
-data(all_potam)
+# keep total survey points > 20
+all_potam <- all_potam[all_potam$tot > 20, ]
+row.names(all_potam) <- 1:nrow(all_potam)
 
 # subsets columns with potam, change freq occurrence to binary, take sum, add to all_potam
+# take log10
 S <- dplyr::select(all_potam, matches('^P', ignore.case = F)) %>% 
   as.matrix(.)
 S[S > 0] <- 1
-S <- rowSums(S)
+S <- log10(rowSums(S))
 all_potam$S <- S
+
+# arcsin square root P data
+toget <- grep('^P', names(all_potam))
+all_potam[, toget] <- asin(sqrt(all_potam[, toget]))
+all_potam[, toget] <- vegan::decostand(all_potam[, toget], method = 'hellinger')
 
 # save
 save(all_potam, file = 'data/all_potam.RData')

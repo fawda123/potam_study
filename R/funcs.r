@@ -104,10 +104,6 @@ bla_sel <- function(resp, exp, forout = FALSE){
   
   library(packfor)
   library(vegan)
-
-  # hellinger trans if multivariate
-  if(ncol(resp) > 1) 
-    resp <- decostand(resp, method = 'hellinger')
   
   mod <- rda(Y = resp, X = exp)
   mod_R2a <- RsquareAdj(mod)$adj.r.squared
