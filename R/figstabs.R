@@ -345,7 +345,7 @@ levels(toplo$var_comb) <- c('Pure', 'Pure', 'Pure', 'Shared', 'Shared', 'Shared'
 cols <- paste0('grey', c('90', '70', '50', '60', '20', '40', '10'))
 
 # y limits
-ylims <- c(0, 0.45)
+ylims <- c(0, 0.7)
 
 # plot margins
 margs <- grid::unit(c(0.1,0.1,0.1,0.1), "cm")
@@ -431,14 +431,13 @@ data(all_potam)
 data(spp_var)
 data(spp_varmod)
 
-# select species in spp_var (models that worked) from all_potam, hellinger transform
+# select species in spp_var (models that worked) from all_potam
 pots <- grep('^P\\.', names(spp_var), ignore.case = F, value = T) %>% 
   grep('^P\\. alpinus', ., invert = TRUE, value = TRUE) %>% # remove p. alpinus
   gsub('^P\\.', 'Potamogeton', .) %>% 
-  pot_nms(., to_spp = FALSE) %>% 
+  pot_nms(., to_spp = FALSE) %>%
   paste0('^', ., '$')
-spp <- dplyr::select(all_potam, matches(paste(pots, collapse = '|'), ignore.case = F)) %>% 
-  decostand(., method = 'hellinger')
+spp <- dplyr::select(all_potam, matches(paste(pots, collapse = '|'), ignore.case = F))
 
 # exp variable columns
 loc_nm <- c('alk','color', 'tp', 'secchi', 'area', 'depth', 'perim')

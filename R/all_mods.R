@@ -105,11 +105,11 @@ spp_varmod <- c(cc_mod = list(cc_mod), rich_mod = list(rich_mod), pot_mod)
 
 save(spp_varmod, file = 'data/spp_varmod.RData')
 
-######
-# save PCNM results
-
-potam_xy <- all_potam[, c('Longitude', 'Latitude')]
-potam_xy_d1 <- dist(potam_xy)
-potam_PCNM <- PCNM(potam_xy_d1)
-
-save(potam_PCNM, file = 'data/potam_PCNM.RData')
+# ######
+# # save PCNM results
+# 
+# potam_xy <- all_potam[, c('Longitude', 'Latitude')]
+# potam_xy_d1 <- dist(potam_xy)
+# potam_PCNM <- PCNM(potam_xy_d1)
+# 
+# save(potam_PCNM, file = 'data/potam_PCNM.RData')

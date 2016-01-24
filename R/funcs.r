@@ -165,18 +165,15 @@ pot_var_bla <- function(dat_in, resp_nm, mod_out = FALSE){
       
       # local model
       loc_sel <- paste0(resp_nm, ' ~ ', paste(names(loc), collapse = ' + '))
-      modloc <- glm(as.formula(loc_sel), family = poisson(link = 'log'), 
-        data = dat_in) 
+      modloc <- glm(as.formula(loc_sel), data = dat_in) 
       
       # climate model
       cli_sel <- paste0(resp_nm, ' ~ ', paste(names(cli), collapse = ' + '))
-      modcli <- glm(as.formula(cli_sel), family = poisson(link = 'log'), 
-        data = dat_in) 
+      modcli <- glm(as.formula(cli_sel), data = dat_in) 
       
       # space model
       spa_sel <- paste0(resp_nm, ' ~ ', paste(names(spa), collapse = ' + '))
-      modspa <- glm(as.formula(spa_sel), family = poisson(link = 'log'), 
-        data = dat_in) 
+      modspa <- glm(as.formula(spa_sel), data = dat_in) 
       
       # adj rsquared from rda of the mods, no easy way to do this with glms
       exps <- list(
