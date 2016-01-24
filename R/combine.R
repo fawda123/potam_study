@@ -86,3 +86,17 @@ all_potam$Ecoregion <- tmp$US_L3NAME
 
 # save
 save(all_potam, file = 'data/all_potam.RData')
+
+##
+# add total richness of potams at a lake
+data(all_potam)
+
+# subsets columns with potam, change freq occurrence to binary, take sum, add to all_potam
+S <- dplyr::select(all_potam, matches('^P', ignore.case = F)) %>% 
+  as.matrix(.)
+S[S > 0] <- 1
+S <- rowSums(S)
+all_potam$S <- S
+
+# save
+save(all_potam, file = 'data/all_potam.RData')

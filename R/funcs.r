@@ -63,8 +63,8 @@ pot_freq <- function(survey, counts = FALSE) {
   out[is.na(out$pot_val), 'pot_val'] <- 0
   out$keys <- NULL
   
-  # add extra row for total effort if T
-  if(counts) out <- rbind(out, c('tot', nrow(data_prep)))
+  # add extra row for total survey points
+  out <- rbind(out, c('tot', nrow(data_prep)))
   
   # outputs as numeric
   out$pot_val <- as.numeric(out$pot_val)
