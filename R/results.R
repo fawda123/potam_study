@@ -84,3 +84,9 @@ tomod <- dplyr::select(all_potam, depth, area, perim, secchi, color, alk, tp, La
   lapply(., function(x){
     t.test(val ~ rares, data = x)
     })
+
+##
+# exp var by species
+meantot <- filter(spp_var, var == 'Total') %>% 
+  dplyr::select(-var, -`Assemb. comp.`, -Richness) %>% 
+  rowMeans

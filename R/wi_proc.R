@@ -12,7 +12,7 @@ load(file = 'M:/docs/veg_indics/veg_analyses/data/widat_ls.RData')
 
 res <- llply(widat_ls, 
   .fun = function(x){
-    out <- try(pot_freq(x, counts = T))
+    out <- try(pot_freq(x, counts = F))
     if('try-error' %in% class(out)) out <- NA
     out
   })
