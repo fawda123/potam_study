@@ -63,10 +63,12 @@ labs <- list(expression(1), expression(phantom('')<=3), expression(phantom('')<=
 geo_cen <- grep('^P\\.', names(spp_var), value = TRUE) %>% 
   pot_nms(., to_spp = F) %>% 
   paste('^', ., '$', sep = '') %>% 
-  c('Longitude', 'Latitude', .) %>% 
+  c('Longitude', 'Latitude', 'tot', .) %>% 
   paste(., collapse = '|') 
 geo_cen <- dplyr::select(data.frame(potams), matches(geo_cen, ignore.case = F)) %>% 
-  gather('spp', 'abu', -Latitude, -Longitude) %>% 
+  gather('spp', 'abu', -Latitude, -Longitude, -tot) %>% 
+  mutate(abu = abu/tot) %>% 
+  select(-tot) %>% 
   group_by(spp) %>% 
   summarize(
     Latitude = weighted.mean(Latitude, abu), 
@@ -582,7 +584,10 @@ totab <- gather(spp_var, 'spp', 'exp', -var) %>%
     exp = 100 * exp
   ) %>% 
   spread(var, exp) %>% 
-  dplyr::select(-Unexplained)
+  dplyr::select(-Unexplained) %>% 
+  mutate(spp = as.character(spp))
+
+totab[3:nrow(totab), ] <- arrange(totab[3:nrow(totab),], spp)
 
 names(totab)[names(totab) %in% 'spp'] <- ''
 
