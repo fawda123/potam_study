@@ -9,12 +9,6 @@ library(dplyr)
 
 load(file = 'data/all_potam.RData')
 
-# add richness
-# Janne used sum of all abundances as richness
-all_potam <- dplyr::select(all_potam, matches('^P', ignore.case = F)) %>% 
-  rowSums %>% 
-  data.frame(all_potam, S = .)
-
 ##
 # community composition model
 cc_mod <- pot_var_bla(all_potam, '^P')
