@@ -68,7 +68,7 @@ geo_cen <- grep('^P\\.', names(spp_var), value = TRUE) %>%
 geo_cen <- dplyr::select(data.frame(potams), matches(geo_cen, ignore.case = F)) %>% 
   gather('spp', 'abu', -Latitude, -Longitude, -tot) %>% 
   mutate(abu = abu/tot) %>% 
-  select(-tot) %>% 
+  dplyr::select(-tot) %>% 
   group_by(spp) %>% 
   summarize(
     Latitude = weighted.mean(Latitude, abu), 
@@ -544,7 +544,7 @@ dev.off()
 load(file = 'data/all_potam.RData')
 
 # summarize variables by category
-loc <- select(all_potam, alk, color, tp, secchi, area, depth, perim) %>% 
+loc <- dplyr::select(all_potam, alk, color, tp, secchi, area, depth, perim) %>% 
   gather('var', 'val') %>% 
   group_by(var) %>% 
   summarise(
@@ -553,7 +553,7 @@ loc <- select(all_potam, alk, color, tp, secchi, area, depth, perim) %>%
     max = max(val, na.rm = T), 
     sd = sd(val, na.rm = T)
   )
-cli <- select(all_potam, tmean, tmax, tmin, prec, alt) %>% 
+cli <- dplyr::select(all_potam, tmean, tmax, tmin, prec, alt) %>% 
   gather('var', 'val') %>% 
   group_by(var) %>% 
   summarise(

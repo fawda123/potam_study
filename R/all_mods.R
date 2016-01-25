@@ -22,6 +22,7 @@ rich_mod <- pot_var_bla(all_potam, '^S$')
 
 pots <- grep('^P', names(all_potam), ignore.case = F, value = T)
 
+# may have to run this a few times, POFR and PF should work
 pot_mod <- vector('list', length(pots))
 names(pot_mod) <- pots
 for(pot in pots){
@@ -86,14 +87,12 @@ data(spp_var)
 pots <- grep('^P\\.', names(spp_var), value = TRUE)
 pots <- pot_nms(pots, to_spp = F)
 
+# may have to run this a few times, sometimes forward.sel doesn't work
 pot_mod <- list()
 for(pot in pots){
  
   cat(pot, '\t') 
-  tmp_mod <- try({pot_var_bla(all_potam, paste0('^', pot, '$'), mod_out = TRUE)})
-  
-  # go to next variable if error
-  if(inherits(tmp_mod, 'try-error')) next
+  tmp_mod <- pot_var_bla(all_potam, paste0('^', pot, '$'), mod_out = TRUE)
   
   # append results
   pot_mod[[pot]] <- tmp_mod

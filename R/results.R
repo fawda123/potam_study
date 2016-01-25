@@ -8,11 +8,10 @@ data(all_potam)
 
 ##
 # mean richness by ecoregion, state
-rich <- dplyr::select(all_potam, matches('^P', ignore.case = F)) %>% 
-  apply(., 2, function(x) pmin(1, x)) %>% 
-  rowSums %>% 
-  data.frame(Ecoregion = all_potam$Ecoregion, state = all_potam$state, rich = .) %>% 
-  
+rich <- dplyr::select(all_potam, S, Ecoregion, state) %>% 
+  mutate(rich = 10^S) %>% 
+  select(-S)
+
 ecorich <- group_by(rich, Ecoregion) %>% 
   summarize(rich = mean(rich))
 
@@ -55,6 +54,13 @@ ggplot(all_potam, aes(x = Longitude, y = Latitude, size = tmean)) +
 data(spp_var)
 data(spp_varmod)
 
+##
+# assemb comp, rich
+spp_var[, 1:3]
+
+spp_varmod[[1]]
+spp_varmod[[2]]
+
 ## 
 # potam in dataset
 pots <- grep('^P', names(all_potam), value = T)
@@ -65,7 +71,7 @@ pots <- pot_nms(pots, to_spp = T) %>%
 # counts by lake of those not modelled
 notmod <- sort(pots[!pots %in% names(spp_var)])
 notmodcts <- all_potam[, pot_nms(notmod, to_spp = F)] %>% 
-  apply(., 2, function(x) pmin(1, x)) %>% 
+  apply(., 2, function(x) x > 0) %>% 
   colSums %>% 
   .[.>0]
 notmod <- pot_nms(names(notmodcts), to_spp = T)
@@ -74,8 +80,7 @@ notmod <- pot_nms(names(notmodcts), to_spp = T)
 toget <- rowSums(all_potam[, names(notmodcts)]) > 0
 all_potam$rares <- 'black'
 all_potam[toget, 'rares'] <- 'blue'
-notrares <- 
-  toget <- rowSums(all_potam[, names(notmodcts)]) > 0
+
 
 # are the explanatory variables different between rare/not rare?
 tomod <- dplyr::select(all_potam, depth, area, perim, secchi, color, alk, tp, Latitude, Longitude, tmean, tmax, tmin, prec, alt, rares) %>% 
