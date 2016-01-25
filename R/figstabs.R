@@ -544,7 +544,41 @@ dev.off()
 # tables
 
 ##
-# tab 1 summary table
+# tab 1 summary table of pots by eco
+data(spp_varmod)
+data(all_potam)
+
+pots <- names(spp_varmod)[-c(1:2)]
+
+potams <- readShapeSpatial('M:/GIS/all_potam.shp')
+data(all_potam)
+
+toeval <- all_potam[, c(pots, 'state', 'Ecoregion')] %>% 
+  mutate(Ecoregion = droplevels(Ecoregion)) %>% 
+  gather('spp', 'cnt', -Ecoregion, -state) %>% 
+  mutate(
+    state = factor(state, levels = c('MN', 'WI'), labels = c('Minnesota', 'Wisconsin')),
+    Ecoregion = factor(Ecoregion, levels = c('Northern Lakes and Forests', 'North Central Hardwood Forests', 'Lake Agassiz Plain', 'Northern Glaciated Plains', 'Western Corn Belt Plains'), labels = c('NLF', 'NCHF', 'LAP', 'NGP', 'WCBP'))
+    )
+levels(toeval$Ecoregion) <- list(NLF = 'NLF', NCHF = c('LAP', 'NCHF'), NGP = 'NGP', WCBP = 'WCBP')
+
+tab <- group_by(toeval, Ecoregion, spp) %>%
+  summarise(
+    lks = sum(cnt > 0), 
+    totlks = paste0('(', length(cnt), ')'),
+    summs = paste0(round(mean(cnt), 2), ' (', round(min(cnt), 2), ', ', round(max(cnt), 2), ')')
+  ) %>% 
+  unite(eco_tot, Ecoregion, totlks, sep = ' ') %>% 
+  gather('stat', 'vals', -eco_tot, -spp) %>% 
+  unite(facs, eco_tot, stat, sep = ' ') %>% 
+  spread(facs, vals) %>% 
+  mutate(spp = pot_nms(spp, to_spp = T)) %>% 
+  arrange(spp)
+
+write.csv(tab, 'tabs/tab3.csv', quote = F, row.names = F)
+
+##
+# tab 2 lake summary table
 
 load(file = 'data/all_potam.RData')
 
@@ -571,10 +605,10 @@ cli <- dplyr::select(all_potam, tmean, tmax, tmin, prec, alt) %>%
 out <- rbind(loc, cli) %>% 
   data.frame
 
-write.csv(out, 'tabs/tab1.csv', quote = F, row.names = F)
+write.csv(out, 'tabs/tab2.csv', quote = F, row.names = F)
 
 ##
-# tab 2 explained variance
+# tab 3 explained variance
 
 load(file = 'data/spp_var.RData')
 
@@ -596,13 +630,13 @@ totab[3:nrow(totab), ] <- arrange(totab[3:nrow(totab),], spp)
 
 names(totab)[names(totab) %in% 'spp'] <- ''
 
-write.csv(totab, 'tabs/tab2.csv', quote = F, row.names = F)
+write.csv(totab, 'tabs/tab3.csv', quote = F, row.names = F)
 
 ##
-# tab 3 significant variables for individual rda or glm mods used in varpart
+# tab 4 significant variables for individual rda or glm mods used in varpart
 
 data(spp_varmod)
 
 totab <- pot_summ(spp_varmod)
 
-write.csv(totab, 'tabs/tab3.csv', row.names = F, quote = F)
+write.csv(totab, 'tabs/tab4.csv', row.names = F, quote = F)
