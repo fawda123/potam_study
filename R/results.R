@@ -81,7 +81,6 @@ toget <- rowSums(all_potam[, names(notmodcts)]) > 0
 all_potam$rares <- 'black'
 all_potam[toget, 'rares'] <- 'blue'
 
-
 # are the explanatory variables different between rare/not rare?
 tomod <- dplyr::select(all_potam, depth, area, perim, secchi, color, alk, tp, Latitude, Longitude, tmean, tmax, tmin, prec, alt, rares) %>% 
   gather('var', 'val', -rares) %>% 
