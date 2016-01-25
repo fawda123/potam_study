@@ -400,7 +400,11 @@ p2 <- ggplot(toplo2, aes(x = spp, y = exp, fill = var, order = -as.numeric(var))
 
 # shared effects  
 toplo3 <- filter(toplo, var_comb == 'Shared')
-toplo3$spp <- factor(toplo3$spp, levels = levels(toplo3$spp)[levs])
+toplo3levs <- levels(toplo3$spp)[levs]
+toplo3$spp <- factor(toplo3$spp, levels = toplo3levs)
+toplo3levs[-c(1:2)] <- paste0('italic("', toplo3levs[-c(1:2)], '")')
+toplo3levs[c(1:2)]<- paste0('"', toplo3levs[c(1:2)], '"')
+toplo3levs <- parse(text = toplo3levs)
 p3 <- ggplot(toplo3, aes(x = spp, y = exp, fill = var, order = -as.numeric(var))) + 
   geom_bar(stat = 'identity', width = bwid) + 
   theme_bw() +
@@ -419,6 +423,7 @@ p3 <- ggplot(toplo3, aes(x = spp, y = exp, fill = var, order = -as.numeric(var))
     values = cols[4:7], 
     guide = guide_legend(reverse = TRUE)
     ) + 
+  scale_x_discrete(labels = toplo3levs) + 
   scale_y_continuous('% explained', limits = ylims)
 
 # save
