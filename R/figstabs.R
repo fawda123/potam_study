@@ -566,7 +566,7 @@ tab <- group_by(toeval, Ecoregion, spp) %>%
   summarise(
     lks = sum(cnt > 0), 
     totlks = paste0('(', length(cnt), ')'),
-    summs = paste0(round(mean(cnt), 2), ' (', round(min(cnt), 2), ', ', round(max(cnt), 2), ')')
+    summs = paste0(round(mean(cnt), 2), ' (', round(min(cnt), 2), '-', round(max(cnt), 2), ')')
   ) %>% 
   unite(eco_tot, Ecoregion, totlks, sep = ' ') %>% 
   gather('stat', 'vals', -eco_tot, -spp) %>% 
@@ -575,7 +575,7 @@ tab <- group_by(toeval, Ecoregion, spp) %>%
   mutate(spp = pot_nms(spp, to_spp = T)) %>% 
   arrange(spp)
 
-write.csv(tab, 'tabs/tab3.csv', quote = F, row.names = F)
+write.csv(tab, 'tabs/tab1.csv', quote = F, row.names = F)
 
 ##
 # tab 2 lake summary table
