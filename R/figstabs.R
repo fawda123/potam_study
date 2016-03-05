@@ -427,7 +427,7 @@ p3 <- ggplot(toplo3, aes(x = spp, y = exp, fill = var, order = -as.numeric(var))
   scale_y_continuous('% explained', limits = ylims)
 
 # save
-tiff('figs/fig3.tif', height = 8, width = 6, units = 'in', compression = 'lzw', res = 300, family = 'serif')
+tiff('figs/fig4.tif', height = 8, width = 6, units = 'in', compression = 'lzw', res = 300, family = 'serif')
 grid.arrange(p1, p2, p3, ncol = 1, heights = c(0.75, 0.75, 1))
 dev.off()
 
@@ -499,7 +499,7 @@ mod_spa <- rda(spp, spa[, spa_axs])
 # biplots
 
 # local
-tiff('figs/fig4.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+tiff('figs/fig5.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
 par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
 
 plot(mod_loc, type = 'n', xlim = c(-1, 1), xlab = '')
@@ -513,7 +513,7 @@ text(mod_loc, "species", col="black", cex=1)
 dev.off()
 
 # climate
-tiff('figs/fig5.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+tiff('figs/fig6.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
 par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
 
 plot(mod_cli, type = 'n', xlim = c(-1, 1), xlab = '')
@@ -527,7 +527,7 @@ text(mod_cli, "species", col="black", cex=1)
 dev.off()
 
 # spatial
-tiff('figs/fig6.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+tiff('figs/fig7.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
 par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
 
 plot(mod_spa, type = 'n', xlim = c(-1, 1), xlab = '')
