@@ -379,7 +379,7 @@ p1 <- ggplot(toplo1, aes(x = spp, y = exp)) +
   
 # pure effects
 toplo2 <- filter(toplo, var_comb == 'Pure')
-toplo2$spp <- factor(toplo2$spp, levels = levels(toplo$spp)[levs]) # sort levels by order
+toplo2$spp <- factor(toplo2$spp, levels = levels(toplo2$spp)[levs]) # sort levels by order
 p2 <- ggplot(toplo2, aes(x = spp, y = exp, fill = var, order = -as.numeric(var))) + 
   geom_bar(stat = 'identity', width = bwid) + 
   theme_bw() +
