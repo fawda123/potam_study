@@ -7,6 +7,7 @@ library(dplyr)
 library(tidyr)
 library(vegan)
 library(ggrepel)
+library(grid)
 
 source('R/funcs.R')
 
@@ -123,7 +124,7 @@ p2 <- ggplot(mncounties, aes(x = long, y = lat)) +
   geom_label_repel(data = geo_cen, 
     aes(x = Longitude, y = Latitude, label = spp),
     point.padding = unit(0.3, "lines"),
-    box.padding = unit(2, "lines"),
+    box.padding = unit(1, "lines"),
     segment.color = 'black',
     segment.size = 0.5
     ) +
@@ -162,8 +163,8 @@ pinset <- ggplot(country, aes(x = long, y = lat, group = group)) +
 # save
 tiff('figs/fig1.tif', height = 8, width = 6, units = 'in', compression = 'lzw', res = 300, family = 'serif')
 grid.newpage()
-v1 <- viewport(width = 0.85, height = 0.85, x = 0.4, y = 0.73) 
-v2 <- viewport(width = 0.85, height = 0.85, x = 0.4, y = 0.27) 
+v1 <- viewport(width = 0.83, height = 0.83, x = 0.4, y = 0.73) 
+v2 <- viewport(width = 0.83, height = 0.83, x = 0.4, y = 0.27) 
 v3 <- viewport(width = 0.35, height = 0.35, x = 0.82, y = 0.9)
 v4 <- viewport(width = 0.2, height = .2, x = 0.9, y = 0.5)
 print(p1, vp = v1) 
@@ -336,8 +337,8 @@ toplo <- gather(spp_var, 'spp', 'exp', -var) %>%
   ) %>% 
   filter(var != 'Unexplained') %>%
   mutate(
+    spp = factor(spp, levels = unique(spp)), 
     var = droplevels(var),
-    spp = droplevels(spp),
     var_comb = factor(var)
   ) %>% 
   data.frame
@@ -378,7 +379,7 @@ p1 <- ggplot(toplo1, aes(x = spp, y = exp)) +
   
 # pure effects
 toplo2 <- filter(toplo, var_comb == 'Pure')
-toplo2$spp <- factor(toplo2$spp, levels = levels(toplo2$spp)[levs]) # sort levels by order
+toplo2$spp <- factor(toplo2$spp, levels = levels(toplo$spp)[levs]) # sort levels by order
 p2 <- ggplot(toplo2, aes(x = spp, y = exp, fill = var, order = -as.numeric(var))) + 
   geom_bar(stat = 'identity', width = bwid) + 
   theme_bw() +
@@ -413,7 +414,7 @@ p3 <- ggplot(toplo3, aes(x = spp, y = exp, fill = var, order = -as.numeric(var))
     axis.title.x = element_blank(), 
     axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0), 
     panel.grid.major = element_blank(), 
-    panel.grid.minor = element_blank(), 
+    panel.grid.minor = element_blank(),
     legend.position = c(1, 1), legend.justification = c(1, 1),
     plot.margin = margs
     ) + 
@@ -568,6 +569,7 @@ tab <- group_by(toeval, Ecoregion, spp) %>%
     totlks = paste0('(', length(cnt), ')'),
     summs = paste0(round(mean(cnt), 2), ' (', round(min(cnt), 2), '-', round(max(cnt), 2), ')')
   ) %>% 
+  ungroup %>% 
   unite(eco_tot, Ecoregion, totlks, sep = ' ') %>% 
   gather('stat', 'vals', -eco_tot, -spp) %>% 
   unite(facs, eco_tot, stat, sep = ' ') %>% 
