@@ -161,7 +161,7 @@ pinset <- ggplot(country, aes(x = long, y = lat, group = group)) +
   coord_equal()
 
 # save
-tiff('figs/fig1.tif', height = 8, width = 6, units = 'in', compression = 'lzw', res = 300, family = 'serif')
+tiff('figs/Fig1.tif', height = 8, width = 6, units = 'in', compression = 'lzw', res = 300, family = 'serif')
 grid.newpage()
 v1 <- viewport(width = 0.83, height = 0.83, x = 0.4, y = 0.73) 
 v2 <- viewport(width = 0.83, height = 0.83, x = 0.4, y = 0.27) 
@@ -312,7 +312,7 @@ pleg <- ggplot(mncounties, aes(x = long, y = lat)) +
 pleg <- g_legend(pleg)
 
 # save plot
-tiff('figs/fig2.tif', height = 8, width = 9, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+tiff('figs/Fig3.tif', height = 8, width = 9, units = 'in', compression = 'lzw', res = 500, family = 'serif')
 grid.arrange(
   arrangeGrob(p1, p2, p3, p4, ncol = 2),
   pleg, ncol = 2, widths = c(1, 0.1)
@@ -321,7 +321,7 @@ dev.off()
 
 ##
 # barplot of var part by species
-# separte barplots by pure, shared, and total 
+# separate barplots by pure, shared, and total 
 
 load(file = 'data/spp_var.RData')
 
@@ -428,7 +428,7 @@ p3 <- ggplot(toplo3, aes(x = spp, y = exp, fill = var, order = -as.numeric(var))
   scale_y_continuous('% explained', limits = ylims)
 
 # save
-tiff('figs/fig4.tif', height = 8, width = 6, units = 'in', compression = 'lzw', res = 300, family = 'serif')
+tiff('figs/Fig4.tif', height = 8, width = 6, units = 'in', compression = 'lzw', res = 300, family = 'serif')
 grid.arrange(p1, p2, p3, ncol = 1, heights = c(0.75, 0.75, 1))
 dev.off()
 
@@ -500,7 +500,7 @@ mod_spa <- rda(spp, spa[, spa_axs])
 # biplots
 
 # local
-tiff('figs/fig5.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+tiff('figs/Fig5.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
 par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
 
 plot(mod_loc, type = 'n', xlim = c(-1, 1), xlab = '')
@@ -514,7 +514,7 @@ text(mod_loc, "species", col="black", cex=1)
 dev.off()
 
 # climate
-tiff('figs/fig6.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+tiff('figs/Fig6.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
 par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
 
 plot(mod_cli, type = 'n', xlim = c(-1, 1), xlab = '')
@@ -528,7 +528,7 @@ text(mod_cli, "species", col="black", cex=1)
 dev.off()
 
 # spatial
-tiff('figs/fig7.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+tiff('figs/Fig7.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
 par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
 
 plot(mod_spa, type = 'n', xlim = c(-1, 1), xlab = '')
@@ -577,7 +577,7 @@ tab <- group_by(toeval, Ecoregion, spp) %>%
   mutate(spp = pot_nms(spp, to_spp = T)) %>% 
   arrange(spp)
 
-write.csv(tab, 'tabs/tab1.csv', quote = F, row.names = F)
+write.csv(tab, 'tabs/Tab1.csv', quote = F, row.names = F)
 
 ##
 # tab 2 lake summary table
@@ -607,7 +607,7 @@ cli <- dplyr::select(all_potam, tmean, tmax, tmin, prec, alt) %>%
 out <- rbind(loc, cli) %>% 
   data.frame
 
-write.csv(out, 'tabs/tab2.csv', quote = F, row.names = F)
+write.csv(out, 'tabs/Tab2.csv', quote = F, row.names = F)
 
 ##
 # tab 3 explained variance
@@ -632,7 +632,7 @@ totab[3:nrow(totab), ] <- arrange(totab[3:nrow(totab),], spp)
 
 names(totab)[names(totab) %in% 'spp'] <- ''
 
-write.csv(totab, 'tabs/tab3.csv', quote = F, row.names = F)
+write.csv(totab, 'tabs/Tab3.csv', quote = F, row.names = F)
 
 ##
 # tab 4 significant variables for individual rda or glm mods used in varpart
@@ -641,4 +641,4 @@ data(spp_varmod)
 
 totab <- pot_summ(spp_varmod)
 
-write.csv(totab, 'tabs/tab4.csv', row.names = F, quote = F)
+write.csv(totab, 'tabs/Tab4.csv', row.names = F, quote = F)
