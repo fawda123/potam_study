@@ -23,6 +23,7 @@ library(tidyr)
 mn_var <- grep('^P|^tot$', names(mn_potam), value = T)
 mn_potam <- melt(mn_potam, measure.vars = mn_var)
 wi_var <- grep('^P|^tot$', names(wi_potam), value = T)
+
 wi_potam <- melt(wi_potam, measure.vars = wi_var)
 
 all_potam <- rbind(mn_potam, wi_potam)
@@ -48,6 +49,10 @@ row.names(all_potam) <- seq(1, nrow(all_potam))
 
 # remove optional column
 all_potam$optional <- NULL
+
+# remove nuisance lake
+all_potam <- all_potam[!all_potam$lake %in% '73019900', ]
+row.names(all_potam) <- 1:nrow(all_potam)
 
 ##
 # get PCNM eigen vectors with positive Moran
@@ -82,7 +87,7 @@ data(all_potam)
 # get spatial data, then overlay
 ecoregs <- readShapeSpatial('M:/GIS/mnwi_eco3utm.shp')
 potams <- readShapeSpatial('M:/GIS/all_potam.shp') 
-tmp <- over(potams, ecoregs)
+tmp <- sp::over(potams, ecoregs)
 
 # add overlay column to all_potam (order is the same)
 all_potam$Ecoregion <- tmp$US_L3NAME

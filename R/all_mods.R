@@ -1,11 +1,16 @@
 ######
 # reproducing pRDA, pLR, and GLM for potamogeton analysis
 
+rm(list = ls())
+
 library(vegan)
 library(packfor)
 library(venneuler)
 library(PCNM)
 library(dplyr)
+source('R/funcs.R')
+
+set.seed(531)
 
 load(file = 'data/all_potam.RData')
 
@@ -27,13 +32,33 @@ pot_mod <- vector('list', length(pots))
 names(pot_mod) <- pots
 for(pot in pots){
  
-  cat(pot, '\t') 
+  # run spp mods
+  cat(pot, '\t')
   tmp_mod <- try({pot_var_bla(all_potam, paste0('^', pot, '$'))})
   
-  # go to next variable if error
-  if(inherits(tmp_mod, 'try-error')) next
+  # did mod work?
+  chk <- inherits(tmp_mod, 'try-error')
   
-  # append results
+  # run again if it didn't and spp is POFR
+  # it should work
+  if(pot == 'POFR' & chk){
+    while(chk){
+      
+      cat(pot, '\t')
+      
+      tmp_mod <- try({pot_var_bla(all_potam, paste0('^', pot, '$'))})
+  
+      # did mod work?
+      chk <- inherits(tmp_mod, 'try-error')
+      
+    }
+      
+  }
+    
+  # otherwise go to next
+  if(chk) next
+
+  # append results if it worked
   pot_mod[[pot]] <- tmp_mod
   
 }
@@ -91,10 +116,33 @@ pots <- pot_nms(pots, to_spp = F)
 pot_mod <- list()
 for(pot in pots){
  
-  cat(pot, '\t') 
-  tmp_mod <- pot_var_bla(all_potam, paste0('^', pot, '$'), mod_out = TRUE)
+  # run spp mods
+  cat(pot, '\t')
+  tmp_mod <- try({pot_var_bla(all_potam, paste0('^', pot, '$'), mod_out = TRUE)})
   
-  # append results
+  # did mod work?
+  chk <- inherits(tmp_mod, 'try-error')
+  
+  # run again if it didn't and spp is POFR
+  # it should work
+  if(pot == 'POFR' & chk){
+    while(chk){
+      
+      cat(pot, '\t')
+      
+      tmp_mod <- try({pot_var_bla(all_potam, paste0('^', pot, '$'), mod_out = TRUE)})
+  
+      # did moded work?
+      chk <- inherits(tmp_mod, 'try-error')
+      
+    }
+      
+  }
+    
+  # otherwise go to next
+  if(chk) next
+
+  # append results if it worked
   pot_mod[[pot]] <- tmp_mod
   
 }
@@ -104,11 +152,11 @@ spp_varmod <- c(cc_mod = list(cc_mod), rich_mod = list(rich_mod), pot_mod)
 
 save(spp_varmod, file = 'data/spp_varmod.RData')
 
-# ######
-# # save PCNM results
-# 
-# potam_xy <- all_potam[, c('Longitude', 'Latitude')]
-# potam_xy_d1 <- dist(potam_xy)
-# potam_PCNM <- PCNM(potam_xy_d1)
-# 
-# save(potam_PCNM, file = 'data/potam_PCNM.RData')
+######
+# save PCNM results
+
+potam_xy <- all_potam[, c('Longitude', 'Latitude')]
+potam_xy_d1 <- dist(potam_xy)
+potam_PCNM <- PCNM(potam_xy_d1)
+
+save(potam_PCNM, file = 'data/potam_PCNM.RData')

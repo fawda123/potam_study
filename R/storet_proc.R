@@ -11,6 +11,8 @@ rm(list = ls())
 library(foreach)
 library(doParallel)
 library(dplyr)
+library(reshape2)
+library(tidyr)
 
 load('data/mn_potam.RData')
 
@@ -106,7 +108,7 @@ dat$lake <- gsub('-', '', as.character(dat$lake))
 dat <- dat[!grepl('[a-z,A-Z]', dat$lake) & nchar(dat$lake) >= 7, ]
 dat$lake <- as.numeric(substr(dat$lake, 1, 8))
 
-# no need to convert units for this example, they are okay
+# # check units
 # table(dat$units, dat$param)
 
 # aggregate by day
@@ -125,6 +127,9 @@ keep_cols <- c(1, 2, 4, 5, 6, 7)
 dat <- dat[, keep_cols]
 names(dat) <- c('lake', 'date', 'alk', 'color', 'tp', 'secchi')
 dat <- dat[, c('lake', 'date', 'secchi', 'color', 'alk', 'tp')]
+
+# secchi is in cm, must convert to m
+dat$secchi <- dat$secchi/100
 
 ## 
 # combine legacy with updated
@@ -210,9 +215,13 @@ out_dat <- foreach(fl = get_files) %dopar% {
 tmp <- do.call('rbind', out_dat)
 tmp <- tmp[as.numeric(tmp$param) %in% c(78, 80, 410, 665), ]
 
+# some secchi values (m) are bogus, should not be greater than 40
+torm <- tmp$param %in% '00078' & tmp$value > 40
+tmp[torm, 'value'] <- NA
+
 # # get lat lon for georeferencing to wbic
 # library(dplyr)
-# stat_pts <- select(tmp, lake, Latitude, Longitude) %>% mutate(stat = lake)
+# stat_pts <- dplyr::select(tmp, lake, Latitude, Longitude) %>% mutate(stat = lake)
 # stat_pts$lake <- NULL
 # stat_pts <- unique(stat_pts)
 # stat_pts$Latitude <- as.numeric(stat_pts$Latitude)
@@ -223,7 +232,7 @@ tmp <- tmp[as.numeric(tmp$param) %in% c(78, 80, 410, 665), ]
 # # then some crap in arcmap
 # 
 # keys <- foreign::read.dbf('M:/GIS/WI_legacy_storet_int.dbf')
-# keys <- select(keys, stat, WATERBODY_, Latitude, Longitude)
+# keys <- dplyr::select(keys, stat, WATERBODY_, Latitude, Longitude)
 # keys <- unique(keys)
 # names(keys) <- c('stat', 'WBIC', 'Latitude', 'Longitude')
 # legacy_wi_storet_keys <- keys
@@ -246,7 +255,7 @@ wi_wbic <- wi_potam$lake
 
 # done
 wi_legacy <- tmp %>% filter(WBIC %in% wi_wbic)
-wi_legacy <- select(wi_legacy, WBIC, date, alk, color, secchi, tp)
+wi_legacy <- dplyr::select(wi_legacy, WBIC, date, alk, color, secchi, tp)
 names(wi_legacy) <- c('wbic', 'date', 'alk', 'color', 'secchi', 'TP')
 
 ######
@@ -265,6 +274,8 @@ dat <- raw_dat[, keep_cols]
 names(dat) <- c('station', 'date', 'param', 'value', 'units')
     
 # merge station data with keys
+dat$station <- as.character(dat$station)
+keys$station <- as.character(keys$station)
 dat <- dplyr::inner_join(dat, keys, by = 'station')
 
 # convert param column
@@ -311,6 +322,13 @@ sel_dat <- dat$param %in% 'TP' & dat$units %in% 'ug/l'
 dat[sel_dat, 'value'] <- dat[sel_dat, 'value'] * 0.001
 
 ##
+# secchi...
+
+# 1m = 100cm
+sel_dat <- dat$param %in% 'secchi' & dat$units %in% 'cm'
+dat[sel_dat, 'value'] <- dat[sel_dat, 'value'] * 0.01
+
+##
 # aggregate by day
 dat$date <- as.POSIXct(as.character(dat$date), format = '%Y-%m-%d %H:%M:%S')
 dat$date <- as.Date(dat$date)
@@ -331,7 +349,7 @@ allwi_wq <- rbind(wi_legacy, wi_recent)
 names(allwi_wq)[1] <- 'lake'
 
 # aggregated 
-allwi_wq<- select(allwi_wq, -date) %>% 
+allwi_wq<- dplyr::select(allwi_wq, -date) %>% 
   group_by(lake) %>% 
   summarise_each(funs(mean(., na.rm = T)))
 

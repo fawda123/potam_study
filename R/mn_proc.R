@@ -125,10 +125,10 @@ source('R/funcs.r')
 
 # data and separate object for locations
 data(mn_potam)
-dat <- select(mn_potam, lake, Longitude, Latitude)
+dat <- dplyr::select(mn_potam, lake, Longitude, Latitude)
 dat <- na.omit(dat)
-coords <- select(dat, Longitude, Latitude)
-dat <- select(dat, lake)
+coords <- dplyr::select(dat, Longitude, Latitude)
+dat <- dplyr::select(dat, lake)
 dat <- SpatialPointsDataFrame(coords, dat, proj4string = CRS("+proj=longlat +datum=WGS84"))
 
 # location of met data
@@ -185,7 +185,7 @@ dat$alt <- alt
 
 ##
 # merge with mn_potam, save
-dat <- select(data.frame(dat), -c(Longitude, Latitude))
+dat <- dplyr::select(data.frame(dat), -c(Longitude, Latitude))
 mn_potam <- left_join(mn_potam, data.frame(dat), by = 'lake')
 
 save(mn_potam, file = 'data/mn_potam.RData')

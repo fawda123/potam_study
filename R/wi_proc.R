@@ -5,6 +5,7 @@ library(dplyr)
 library(plyr)
 library(reshape2)
 library(data.table)
+rm(list = ls())
 
 source('R/funcs.r')
 
@@ -51,15 +52,15 @@ data(wi_potam)
 
 # WI metadata w/ morpho info
 data(wimet_dat)
-wi_morpho <- select(wimet_dat, WBIC, area_m2, SDI, Maxdepthm)
+wi_morpho <- dplyr::select(wimet_dat, WBIC, area_m2, SDI, Maxdepthm)
 
 # area, depth
 wi_morpho <- mutate(wi_morpho, 
   area = area_m2 / 1e6, 
   depth = Maxdepthm,
-  perim = SDI * 2 * sqrt(pi * area_m2) / 1e6
+  perim = SDI * 2 * sqrt(pi * (area_m2 / 1e6))
 )
-wi_morpho <- select(wi_morpho, WBIC, area, depth, perim)
+wi_morpho <- dplyr::select(wi_morpho, WBIC, area, depth, perim)
 names(wi_morpho)[names(wi_morpho) %in% 'WBIC'] <- 'lake'
 
 # combine and save
@@ -106,10 +107,10 @@ source('R/funcs.r')
 
 # data and separate object for locations
 data(wi_potam)
-dat <- select(wi_potam, lake, Longitude, Latitude)
+dat <- dplyr::select(wi_potam, lake, Longitude, Latitude)
 dat <- na.omit(dat)
-coords <- select(dat, Longitude, Latitude)
-dat <- select(dat, lake)
+coords <- dplyr::select(dat, Longitude, Latitude)
+dat <- dplyr::select(dat, lake)
 dat <- SpatialPointsDataFrame(coords, dat, proj4string = CRS("+proj=longlat +datum=WGS84"))
 
 # location of met data
@@ -166,7 +167,7 @@ dat$alt <- alt
 
 ##
 # merge with wi_potam, save
-dat <- select(data.frame(dat), -c(Longitude, Latitude))
+dat <- dplyr::select(data.frame(dat), -c(Longitude, Latitude))
 wi_potam <- left_join(wi_potam, data.frame(dat), by = 'lake')
 
 save(wi_potam, file = 'data/wi_potam.RData')

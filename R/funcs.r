@@ -104,7 +104,7 @@ bla_sel <- function(resp, exp, forout = FALSE){
   
   library(packfor)
   library(vegan)
-  
+
   mod <- rda(Y = resp, X = exp)
   mod_R2a <- RsquareAdj(mod)$adj.r.squared
   modfwd <- forward.sel(resp, as.matrix(exp), nperm = 999)
@@ -116,7 +116,7 @@ bla_sel <- function(resp, exp, forout = FALSE){
 ######
 # same function as above but variable selection for individual mods (loc, sli, spa) uses blanchet variable selection
 pot_var_bla <- function(dat_in, resp_nm, mod_out = FALSE){
-  
+
   library(vegan)
   library(packfor)
   library(dplyr)

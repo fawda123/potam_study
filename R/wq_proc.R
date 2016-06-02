@@ -1,6 +1,12 @@
 ######
 # this file was used to supplement storet wq data with other wq files for MN and WI
 
+library(tidyr)
+library(dplyr)
+library(reshape2)
+
+rm(list = ls())
+
 ##
 # mn data
 
@@ -28,7 +34,7 @@
 # sel_cols <- c('Depth, Secchi disk depth', 'Apparent color', 'Alkalinity, total', 'Phosphorus')
 # tmp <- tmp %>% 
 #   filter(CHEMICAL_NAME %in% sel_cols & !UNIT %in% 'mg/g') %>% 
-#   select(DOWLKNUM, CHEMICAL_NAME, SAMPLEDATE, RESULT_NUMERIC, UNIT) %>% 
+#   dplyr::select(DOWLKNUM, CHEMICAL_NAME, SAMPLEDATE, RESULT_NUMERIC, UNIT) %>% 
 #   group_by(DOWLKNUM, CHEMICAL_NAME) %>% 
 #   summarize(mean_res = mean(as.numeric(RESULT_NUMERIC), na.rm = T))
 # 
@@ -67,7 +73,7 @@ storet[sel] <- fishwq[sel]
 tmp <- tmp[grepl('\\.x$', tmp$variable), ]
 tmp$newq <- storet  
 
-tmp <- select(tmp, lake, variable, newq)
+tmp <- dplyr::select(tmp, lake, variable, newq)
 tmp$variable <- gsub('\\.x$', '', tmp$variable)
 
 tmp <- spread(tmp, key = 'variable', value = 'newq')
@@ -79,6 +85,8 @@ save(allmn_wq, file = 'data/allmn_wq.RData')
 
 ######
 # wisconsin
+
+rm(list = ls())
 
 # # # load raw LTER data
 # # raw_dat <- read.csv('M:/docs/veg_indics/wq_data/wilakeslimnoparams.csv', 
@@ -149,7 +157,7 @@ storet[sel] <- lterwq[sel]
 tmp <- tmp[grepl('\\.x$', tmp$variable), ]
 tmp$newq <- storet  
 
-tmp <- select(tmp, lake, variable, newq)
+tmp <- dplyr::select(tmp, lake, variable, newq)
 tmp$variable <- gsub('\\.x$', '', tmp$variable)
 
 tmp <- tidyr::spread(tmp, key = 'variable', value = 'newq')

@@ -1,6 +1,34 @@
 # README
 
-Materials for manuscript describing drivers of Potamogeton species distribution in temperate lakes
+Materials for manuscript describing drivers of Potamogeton species distribution in temperate lakes.  Potamegeton survey data were processed in `veg_analyses.rproj`.  All other data were created in this project with several processing scripts.  The data files can be recreated as follows:
+
+
+```r
+# process storet data, legacy and curent
+source('R/storet_proc.R')
+
+# supplement storet wq data with other sources
+source('R/wq_proc.R')
+
+# combine plant and covariate data for mn
+source('R/mn_proc.R')
+
+# combine plant and covariate data for wi
+source('R/wi_proc.R')
+
+# combine mn and wi data
+source('R/combine.R')
+
+# run models on combined ata
+source('R/all_mods.R')
+```
+
+All figures and tables can be recreated as follows:
+
+
+```r
+source('R/figstabs.R')
+```
 
 ## Data files
 
@@ -22,7 +50,7 @@ Materials for manuscript describing drivers of Potamogeton species distribution 
 
 * `spp_var.RData` variance partitioning by species, created in `all_mods.R`
 
-* `spp_var.RData` individual local, cliamte, spatial models for each species, used for variance partitioning
+* `spp_varmod.RData` individual local, climate, spatial models for each species, used for variance partitioning, created in `all_mods.R`
 
 * `wi_potam.RData` Wisconsin data, frequency occurrence of potamogeton species and supporting data for each lake
 
@@ -168,7 +196,7 @@ dim(all_potam)
 ```
 
 ```
-## [1] 215 104
+## [1] 214 105
 ```
 
 ```r
@@ -178,5 +206,5 @@ map('state', region = c('wisconsin', 'minnesota'))
 points(Latitude ~ Longitude, data = all_potam)
 ```
 
-![](README_files/figure-html/unnamed-chunk-2-1.png) 
+![](README_files/figure-html/unnamed-chunk-4-1.png)
 
