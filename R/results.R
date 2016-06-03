@@ -10,7 +10,7 @@ data(all_potam)
 # mean richness by ecoregion, state
 rich <- dplyr::select(all_potam, S, Ecoregion, state) %>% 
   mutate(rich = 10^S) %>% 
-  select(-S)
+  dplyr::select(-S)
 
 ecorich <- group_by(rich, Ecoregion) %>% 
   summarize(rich = mean(rich))
@@ -38,15 +38,15 @@ abundecost <- dplyr::select(all_potam, matches('^P|Ecoregion|state', ignore.case
 
 ##
 # variation in lake characteristics
-locchrs <- select(all_potam, depth, area, perim, secchi, color, alk, tp, state, Ecoregion) %>% 
+locchrs <- dplyr::select(all_potam, depth, area, perim, secchi, color, alk, tp, state, Ecoregion) %>% 
   group_by(state, Ecoregion) %>% 
   summarize_each(funs(mean(., na.rm = T)))
    
-clichrs <- select(all_potam, tmean, tmax, tmin, prec, alt, state) %>% 
+clichrs <- dplyr::select(all_potam, tmean, tmax, tmin, prec, alt, state) %>% 
   group_by(state) %>% 
   summarize_each(funs(mean(., na.rm = T)))
      
-ggplot(all_potam, aes(x = Longitude, y = Latitude, size = tmean)) + 
+ggplot(all_potam, aes(x = Longitude, y = Latitude, size = alk)) + 
   geom_point()
 
 ##

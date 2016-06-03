@@ -91,10 +91,9 @@ p1 <- ggplot(mncounties, aes(x = long, y = lat)) +
   geom_polygon(data = ecoregs, aes(x = long, y = lat, group = group, fill= Ecoregion),  
     alpha = 0.5) +
   geom_point(data = toplo, aes(x = Longitude, y = Latitude, 
-    size = Richcat, colour = Richcat), alpha = 0.65) +
+    size = Richcat), fill = 'white', colour = 'black', alpha = 0.8, shape = 21, stroke = 1) +
   scale_size_discrete('Richness', range = c(2, 8), labels = labs) + 
-  scale_colour_manual('Richness', values = rep('black', 5), labels = labs) +
-  scale_fill_manual(values = brewer.pal(9, 'Greys')[c(3, 5, 7, 9)]) +
+  scale_fill_manual(values = brewer.pal(9, 'Spectral')[c(3, 5, 7, 9)]) +
   theme_classic() + 
   theme(axis.line=element_blank(),axis.text.x=element_blank(),
           axis.text.y=element_blank(),axis.ticks=element_blank(),
@@ -120,7 +119,9 @@ p2 <- ggplot(mncounties, aes(x = long, y = lat)) +
   geom_polygon(data = mnstate, aes(x = long, y = lat), fill = NA, colour = 'black') + 
   geom_polygon(data = ecoregs, aes(x = long, y = lat, group = group, fill= Ecoregion),  
     alpha = 0.5) +
-  geom_point(data = geo_cen, aes(x = Longitude, y = Latitude, size = abu), alpha = 0.85, size = geo_cen$abu) +
+  geom_point(data = geo_cen, aes(x = Longitude, y = Latitude, size = abu), 
+    fill = 'white', colour = 'black', alpha = 0.8, shape = 21, stroke = 1, 
+    size = geo_cen$abu) +
   geom_label_repel(data = geo_cen, 
     aes(x = Longitude, y = Latitude, label = spp),
     point.padding = unit(0.3, "lines"),
@@ -128,7 +129,7 @@ p2 <- ggplot(mncounties, aes(x = long, y = lat)) +
     segment.color = 'black',
     segment.size = 0.5
     ) +
-  scale_fill_manual(values = brewer.pal(9, 'Greys')[c(3, 5, 7, 9)]) +
+  scale_fill_manual(values = brewer.pal(9, 'Spectral')[c(3, 5, 7, 9)]) +
   theme_classic() + 
   theme(axis.line=element_blank(),axis.text.x=element_blank(),
           axis.text.y=element_blank(),axis.ticks=element_blank(),
@@ -161,7 +162,7 @@ pinset <- ggplot(country, aes(x = long, y = lat, group = group)) +
   coord_equal()
 
 # save
-tiff('figs/Fig1.tif', height = 8, width = 6, units = 'in', compression = 'lzw', res = 300, family = 'serif')
+tiff('figs/Fig1_color.tif', height = 8, width = 6, units = 'in', compression = 'lzw', res = 300, family = 'serif')
 grid.newpage()
 v1 <- viewport(width = 0.83, height = 0.83, x = 0.4, y = 0.73) 
 v2 <- viewport(width = 0.83, height = 0.83, x = 0.4, y = 0.27) 
@@ -269,7 +270,7 @@ pbase <- ggplot(mncounties, aes(x = long, y = lat)) +
   geom_polygon(data = mnstate, aes(x = long, y = lat), fill = NA, colour = 'black') + 
   geom_polygon(data = ecoregs, aes(x = long, y = lat, group = group, fill= Ecoregion),  
     alpha = 0.5) +
-  scale_fill_manual(values = brewer.pal(9, 'Greys')[c(3, 5, 7, 9)]) +
+  scale_fill_manual(values = brewer.pal(9, 'Spectral')[c(3, 5, 7, 9)]) +
   theme_classic() + 
   theme(legend.position = 'none', 
     axis.line=element_blank(),axis.text.x=element_blank(),
@@ -284,35 +285,39 @@ pbase <- ggplot(mncounties, aes(x = long, y = lat)) +
   coord_equal()
 
 # add spatial vars, 1 through 4 princomp
-alph <- 0.55
+alph <- 0.85
 
 p1 <- pbase + 
-  geom_point(data = potams_pts, aes_string(x = 'Longitude', y = 'Latitude'), size = potams_pts[, spa_axs[1]], alpha = alph) + 
+  geom_point(data = potams_pts, aes_string(x = 'Longitude', y = 'Latitude'), 
+    shape = 21, fill = 'white', colour = 'black', size = potams_pts[, spa_axs[1]], alpha = alph) + 
   scale_size_continuous(range = rng) + 
   ggtitle(labs[1])
 
 p2 <- pbase + 
-  geom_point(data = potams_pts, aes_string(x = 'Longitude', y = 'Latitude'), size = potams_pts[, spa_axs[2]], alpha = alph) + 
+  geom_point(data = potams_pts, aes_string(x = 'Longitude', y = 'Latitude'), 
+    shape = 21, fill = 'white', colour = 'black', size = potams_pts[, spa_axs[2]], alpha = alph) + 
   scale_size_continuous(range = rng) + 
   ggtitle(labs[2])
 
 p3 <- pbase + 
-  geom_point(data = potams_pts, aes_string(x = 'Longitude', y = 'Latitude'), size = potams_pts[, spa_axs[3]], alpha = alph) + 
+  geom_point(data = potams_pts, aes_string(x = 'Longitude', y = 'Latitude'), 
+    shape = 21, fill = 'white', colour = 'black', size = potams_pts[, spa_axs[3]], alpha = alph) + 
   scale_size_continuous(range = rng) + 
   ggtitle(labs[3])
 
 p4 <- pbase + 
-  geom_point(data = potams_pts, aes_string(x = 'Longitude', y = 'Latitude', size = spa_axs[4]), size = potams_pts[, spa_axs[4]], alpha = alph) +
+  geom_point(data = potams_pts, aes_string(x = 'Longitude', y = 'Latitude'), 
+    shape = 21, fill = 'white', colour = 'black', size = potams_pts[, spa_axs[4]], alpha = alph) + 
   ggtitle(labs[4])
 
 pleg <- ggplot(mncounties, aes(x = long, y = lat)) + 
   geom_polygon(data = ecoregs, aes(x = long, y = lat, group = group, fill= Ecoregion),  
     alpha = 0.5) +
-  scale_fill_manual(values = brewer.pal(9, 'Greys')[c(3, 5, 7, 9)])
+  scale_fill_manual(values = brewer.pal(9, 'Spectral')[c(3, 5, 7, 9)])
 pleg <- g_legend(pleg)
 
 # save plot
-tiff('figs/Fig3.tif', height = 8, width = 9, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+tiff('figs/Fig3_color.tif', height = 8, width = 9, units = 'in', compression = 'lzw', res = 500, family = 'serif')
 grid.arrange(
   arrangeGrob(p1, p2, p3, p4, ncol = 2),
   pleg, ncol = 2, widths = c(1, 0.1)
@@ -339,16 +344,18 @@ toplo <- gather(spp_var, 'spp', 'exp', -var) %>%
   mutate(
     spp = factor(spp, levels = unique(spp)), 
     var = droplevels(var),
-    var_comb = factor(var)
+    var_comb = factor(var), 
+    exp = 100 * exp
   ) %>% 
   data.frame
 levels(toplo$var_comb) <- c('Pure', 'Pure', 'Pure', 'Shared', 'Shared', 'Shared', 'Shared', 'Total')
 
-# color vectors
-cols <- paste0('grey', c('90', '70', '50', '60', '20', '40', '10'))
+# color vectors, upload of fig 2 color to http://labs.tineye.com/color/
+# local, climate, space, local plus climate, climate plus space, local plus space, all
+cols <- c('#fb7e7e', '#a9be98', '#8da5bb', '#a57f59', '#628484', '#8e6479', '#636262')
 
 # y limits
-ylims <- c(0, 0.7)
+ylims <- c(0, 70)
 
 # plot margins
 margs <- grid::unit(c(0.1,0.1,0.1,0.1), "cm")
@@ -363,7 +370,7 @@ toplo1 <- filter(toplo, var_comb == 'Total')
 levs <- c(1, 2, rev(2 + order(toplo1$exp[-c(1,2)])))
 toplo1$spp <- factor(toplo1$spp, levels = levels(toplo1$spp)[levs])
 p1 <- ggplot(toplo1, aes(x = spp, y = exp)) + 
-  geom_bar(stat = 'identity', fill = NA, colour = 'black', width = bwid) + 
+  geom_bar(stat = 'identity', fill = 'black', colour = 'black', width = bwid) + 
   theme_bw() +
   theme(
     legend.title = element_blank(),
@@ -428,7 +435,7 @@ p3 <- ggplot(toplo3, aes(x = spp, y = exp, fill = var, order = -as.numeric(var))
   scale_y_continuous('% explained', limits = ylims)
 
 # save
-tiff('figs/Fig4.tif', height = 8, width = 6, units = 'in', compression = 'lzw', res = 300, family = 'serif')
+tiff('figs/Fig4_color.tif', height = 8, width = 6, units = 'in', compression = 'lzw', res = 300, family = 'serif')
 grid.arrange(p1, p2, p3, ncol = 1, heights = c(0.75, 0.75, 1))
 dev.off()
 
@@ -500,7 +507,7 @@ mod_spa <- rda(spp, spa[, spa_axs])
 # biplots
 
 # local
-tiff('figs/Fig5.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+tiff('figs/Fig5_bw.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
 par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
 
 plot(mod_loc, type = 'n', xlim = c(-1, 1), xlab = '')
@@ -514,7 +521,7 @@ text(mod_loc, "species", col="black", cex=1)
 dev.off()
 
 # climate
-tiff('figs/Fig6.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+tiff('figs/Fig6_bw.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
 par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
 
 plot(mod_cli, type = 'n', xlim = c(-1, 1), xlab = '')
@@ -528,7 +535,7 @@ text(mod_cli, "species", col="black", cex=1)
 dev.off()
 
 # spatial
-tiff('figs/Fig7.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+tiff('figs/Fig7_bw.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
 par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
 
 plot(mod_spa, type = 'n', xlim = c(-1, 1), xlab = '')
