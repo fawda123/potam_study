@@ -507,7 +507,7 @@ mod_spa <- rda(spp, spa[, spa_axs])
 # biplots
 
 # local
-tiff('figs/Fig5_bw.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+tiff('figs/Fig5_color.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
 par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
 
 plot(mod_loc, type = 'n', xlim = c(-1, 1), xlab = '')
@@ -521,7 +521,7 @@ text(mod_loc, "species", col="black", cex=1)
 dev.off()
 
 # climate
-tiff('figs/Fig6_bw.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+tiff('figs/Fig6_color.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
 par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
 
 plot(mod_cli, type = 'n', xlim = c(-1, 1), xlab = '')
@@ -535,7 +535,7 @@ text(mod_cli, "species", col="black", cex=1)
 dev.off()
 
 # spatial
-tiff('figs/Fig7_bw.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
+tiff('figs/Fig7_color.tif', height = 8, width = 5, units = 'in', compression = 'lzw', res = 500, family = 'serif')
 par(mfrow = c(2, 1), mar = c(4.5, 4.5, 0.5, 0.5))
 
 plot(mod_spa, type = 'n', xlim = c(-1, 1), xlab = '')
